@@ -1,0 +1,16 @@
+{
+  "name": "aquaman",
+  "version": "0.0.2",
+  "description": "Aquarium management server",
+  "main": "main.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "Mat Vezer",
+  "license": "ISC",
+  "dependencies": {
+    "hapi": "^16.1.0",
+    "ioredis": "^2.5.0",
+    "nconf": "^0.8.4"
+  }
+}

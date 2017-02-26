@@ -1,0 +1,14 @@
+{
+    "NODE_ENV": "dev",
+
+    "HTTP_HOST": "localhost",
+    "HTTP_PORT": 3000,
+
+    "REDIS_HOST": "localhost",
+    "REDIS_PORT": 6379,
+    "REDIS_PASSWORD": "guest",
+    "REDIS_FAMILY": 0,
+    "REDIS_KEY_SEPARATOR": ":",
+    "REDIS_SETTINGS_KEY_PREFIX":"settings",
+    "REDIS_STATE_KEY_PREFIX":"state"
+}
