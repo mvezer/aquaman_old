@@ -5,15 +5,18 @@ const StatusModel = require("./model/StatusModel");
 
 const config = new Config(process.argv[2] || "config.json");
 const server = new HttpServer(config.fill(["httpHost", "httpPort"]));
-const statusModel = new StatusModel();
+
 
 var redisClient = new RedisClient(config);
 
+const statusModel = new StatusModel(config.fill(["redisKeySeparator", "redisStatusKeyPrefix"]), redisClient, null);
+
 redisClient.connect()
+    .then(() => { statusModel.init() })
     .then(() => {
         server
             .connect()
-            .addRoute(require("./routes/DefaultRouter"),":)")
+            .addRoute(require("./routes/DefaultRouter"), ":)")
             .addRoute(require("./routes/GetStatusRouter"), statusModel)
             .start()
     })

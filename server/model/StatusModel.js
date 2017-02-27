@@ -3,18 +3,43 @@ module.exports = function (config, redisService, rpiService) {
     var redisService = redisService;
     var rpiService = rpiService;
 
+    var init = function () {
+        return new Promise(function (resolve, reject) {
+            let promises = [];
+            for (let key in status) {
+                if (status.hasOwnProperty(key)) {
+                    promises.push(redisService.get(getKey(key)).then((value) => { status[key] = value }));
+                }
+
+            }
+
+            Promise.all(promises)
+                .then(function (values) { resolve() })
+                .catch((error) => { reject(error) });
+        });
+    }
 
     var get = function (key) {
         return this.status[key];
     }
 
     var set = function (key, value) {
-        if (this.status[key] != value) {
-            this.status[key] = value;
-
-            this.redisService.apply
-        }
+        return new Promise((resolve, reject) => {
+            if (status[key] != value) {
+                redisService.set(getKey(key), value)
+                    .then(() => { status[key] = value; resolve() })
+                    .catch((error) => { reject(error) })
+            } else {
+                resolve();
+            }
+        });
     }
+
+    var getKey = function (id) {
+        return config.redisStatusKeyPrefix + config.redisKeySeparator + String(id);
+    }
+
+
 
     var getStatus = function () {
         return status;
@@ -23,6 +48,7 @@ module.exports = function (config, redisService, rpiService) {
     return {
         get: get,
         set: set,
-        getStatus: getStatus
+        getStatus: getStatus,
+        init: init
     }
 }

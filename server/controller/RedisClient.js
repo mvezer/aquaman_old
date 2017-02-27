@@ -17,14 +17,24 @@ module.exports = function (config) {
             client = new Redis(connectionUrl)
             client.on("connect", function () { console.log("Redis is connected to %s", connectionUrl) })
             client.on("ready", function () { console.log("Redis is ready"); resolve() })
-            client.on("error", function(error) { reject(error) })
+            client.on("error", function (error) { reject(error) })
         })
+    }
+
+    var set = function (key, value) {
+        return client.redis.set(key, value);
+    }
+
+    var get = function (key) {
+        return client.get(key);
     }
 
     return {
         config: config,
         connect: connect,
-        client: client
+        client: client,
+        set: set,
+        get: get,
     }
 
 }

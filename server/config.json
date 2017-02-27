@@ -10,5 +10,5 @@
     "REDIS_FAMILY": 0,
     "REDIS_KEY_SEPARATOR": ":",
     "REDIS_SETTINGS_KEY_PREFIX":"settings",
-    "REDIS_STATE_KEY_PREFIX":"state"
+    "REDIS_STATUS_KEY_PREFIX":"status"
 }
