@@ -1,7 +1,5 @@
 module.exports = function (message) {
     var message = message;
-    var method = "GET";
-    var path = "/"
 
     var handler = function (request, reply) {
         reply(message).code(200);
@@ -9,8 +7,8 @@ module.exports = function (message) {
 
     var getRouter = function() {
         return {
-            method: method,
-            path: path,
+            method: "GET",
+            path: "/",
             handler: handler
         }
     }

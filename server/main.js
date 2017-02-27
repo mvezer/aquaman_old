@@ -16,8 +16,9 @@ redisClient.connect()
     .then(() => {
         server
             .connect()
-            .addRoute(require("./routes/DefaultRouter"), ":)")
-            .addRoute(require("./routes/GetStatusRouter"), statusModel)
+            .addRoute(require("./route/DefaultRouter"), ":)")
+            .addRoute(require("./route/GetStatusRouter"), statusModel)
+            .addRoute(require("./route/PatchStatusRouter"), statusModel)
             .start()
     })
     .then(() => { console.log("HTTP server connected") })
