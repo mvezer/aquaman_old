@@ -8,9 +8,14 @@
   },
   "author": "Mat Vezer",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mvezer/aquaman.git"
+  },
   "dependencies": {
     "hapi": "^16.1.0",
     "ioredis": "^2.5.0",
+    "joi": "^10.2.2",
     "nconf": "^0.8.4"
   }
 }
