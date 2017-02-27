@@ -22,7 +22,7 @@ module.exports = function (config) {
     }
 
     var set = function (key, value) {
-        return client.redis.set(key, value);
+        return client.set(key, value);
     }
 
     var get = function (key) {

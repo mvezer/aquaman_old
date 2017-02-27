@@ -1,6 +1,6 @@
-module.exports = function (config, redisService, rpiService) {
+module.exports = function (config, redisClient, rpiService) {
     var status = { filter: false, light: true, co2: true };
-    var redisService = redisService;
+    var redisClient = redisClient;
     var rpiService = rpiService;
 
     var init = function () {
@@ -8,7 +8,7 @@ module.exports = function (config, redisService, rpiService) {
             let promises = [];
             for (let key in status) {
                 if (status.hasOwnProperty(key)) {
-                    promises.push(redisService.get(getKey(key)).then((value) => { status[key] = value }));
+                    promises.push(redisClient.get(getKey(key)).then((value) => { status[key] = value }));
                 }
 
             }
@@ -26,7 +26,7 @@ module.exports = function (config, redisService, rpiService) {
     var set = function (key, value) {
         return new Promise((resolve, reject) => {
             if (status[key] != value) {
-                redisService.set(getKey(key), value)
+                redisClient.set(getKey(key), value)
                     .then(() => { status[key] = value; resolve() })
                     .catch((error) => { reject(error) })
             } else {
