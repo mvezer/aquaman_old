@@ -4,8 +4,6 @@ const ConfigUtil = require("../util/ConfigUtil");
 
 module.exports = function (config) {
     var config = config;
-
-    console.log(config);
     var server;
 
     var connect = function () {
@@ -18,8 +16,6 @@ module.exports = function (config) {
     var addRoute = function (router, parameters) {
         const routerInstance = new router(parameters);
 
-        //console.log(routerInstance.handler(null,null));
-
         server.route(routerInstance.getRouter());
 
         return this;
@@ -27,7 +23,6 @@ module.exports = function (config) {
 
     var start = function () {
         return server.start();
-        //console.log("HTTP server started on port ", this.config.httpPort);
     }
 
     var getUrl = function () {

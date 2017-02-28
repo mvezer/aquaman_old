@@ -6,8 +6,7 @@ const StatusModel = require("./model/StatusModel");
 const config = new Config(process.argv[2] || "config.json");
 const server = new HttpServer(config.fill(["httpHost", "httpPort"]));
 
-
-var redisClient = new RedisClient(config);
+const redisClient = new RedisClient(config);
 
 const statusModel = new StatusModel(config.fill(["redisKeySeparator", "redisStatusKeyPrefix"]), redisClient, null);
 
@@ -17,8 +16,8 @@ redisClient.connect()
         server
             .connect()
             .addRoute(require("./route/DefaultRouter"), ":)")
-            .addRoute(require("./route/GetStatusRouter"), statusModel)
-            .addRoute(require("./route/PatchStatusRouter"), statusModel)
+            .addRoute(require("./route/StatusGetRouter"), statusModel)
+            .addRoute(require("./route/StatusPatchRouter"), statusModel)
             .start()
     })
     .then(() => { console.log("HTTP server connected") })
