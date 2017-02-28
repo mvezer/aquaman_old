@@ -1,6 +1,4 @@
-module.exports = function (message) {
-    var message = message;
-
+module.exports = function () {
     var handler = function (request, reply) {
         reply(message).code(200);
     }

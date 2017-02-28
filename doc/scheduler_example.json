@@ -1,0 +1,46 @@
+{
+    "channels": [
+        {
+            "channel_id": "light",
+            "timings": [
+                {
+                    "time": "7:00",
+                    "status": true
+                },
+                {
+                    "time": "10:00",
+                    "status": false
+                },
+                {
+                    "time": "17:00",
+                    "status": true
+                },
+                {
+                    "time": "21:30",
+                    "status": false
+                }
+            ]
+        },
+        {
+            "channel_id": "co2",
+            "timings": [
+                {
+                    "time": "6:00",
+                    "status": true
+                },
+                {
+                    "time": "9:00",
+                    "status": false
+                },
+                {
+                    "time": "16:00",
+                    "status": true
+                },
+                {
+                    "time": "20:30",
+                    "status": false
+                }
+            ]
+        }
+    ]
+}
