@@ -5,12 +5,12 @@ module.exports = function (statusModel) {
     statusPatchRouter.__proto__ = AStatusRouter(statusModel);
 
     var handler = function (request, reply) {
-        statusPatchRouter.__proto__.handler(request, reply, require("../schema/StatusPatchSchema"));
+        statusPatchRouter.__proto__.handler(request, reply, require("../schema/StatusUpdateSchema"));
     }
 
     statusPatchRouter.getRouter = function () {
         return {
-            method: "PATCH",
+            method: "PUT",
             path: "/status",
             handler: handler
         }
