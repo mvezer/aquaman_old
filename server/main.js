@@ -13,10 +13,13 @@ const redisClient = new RedisClient(config);
 const statusModel = new StatusModel(config.fill(["redisKeySeparator", "redisStatusKeyPrefix"]), redisClient, null);
 const scheduleManager = new ScheduleManager(config, redisClient, statusModel);
 
+
 redisClient.connect()
-    .then(() => { statusModel.init() })
+    .then(() => { console.log("Initializing status model..."); return statusModel.init() })
+    .then(() => { console.log("Initializing schedule manager..."); return scheduleManager.init() })
     .then(() => {
-        server
+        console.log("Initializing http server...");
+        return server
             .connect()
             .addRoute(require("./route/DefaultRouter"))
             .addRoute(require("./route/StatusGetRouter"), statusModel)
@@ -26,8 +29,7 @@ redisClient.connect()
             .start()
     })
     .then(() => { console.log("HTTP server connected") })
-    .catch(
-    (error) => {
+    .catch((error) => {
         console.log(error);
     })
 

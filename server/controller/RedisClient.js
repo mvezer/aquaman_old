@@ -30,8 +30,13 @@ module.exports = function (config) {
         return client.get(key);
     }
 
-    var getKeys = function(prefix) {
-        return  prefix ? client.send_command("KEYS") : client.send_command("KEYS", prefix + config.getEnv("redisKeySeparator"));
+
+    var getKeys = function (prefix) {
+        return prefix ? client.send_command("keys", prefix + config.getEnv("redisKeySeparator") + "*") : client.send_command("keys","*");
+    }
+
+    var getPipeline = function () {
+        return client.pipeline();
     }
 
     return {
@@ -40,6 +45,8 @@ module.exports = function (config) {
         client: client,
         set: set,
         get: get,
+        getPipeline: getPipeline,
+        getKeys: getKeys
     }
 
 }
