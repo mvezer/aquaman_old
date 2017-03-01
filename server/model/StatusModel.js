@@ -10,7 +10,6 @@ module.exports = function (config, redisClient, rpiService) {
                 if (status.hasOwnProperty(key)) {
                     promises.push(redisClient.get(getKey(key)).then((value) => { status[key] = value }));
                 }
-
             }
 
             Promise.all(promises)

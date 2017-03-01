@@ -21,10 +21,9 @@ module.exports = function (config, redisClient, statusModel) {
                 })
                 .then(() => {
                     reset(timings);
-                    console.log(timings);
                     resolve();
                 })
-                .catch((error) => { console.log(error); reject(error) });
+                .catch((error) => { reject(error) });
         });
     }
 
@@ -36,7 +35,20 @@ module.exports = function (config, redisClient, statusModel) {
         timings.sort(sortTimingsArray);
         timingsArray = timings;
 
-        console.log(TimeUtil.getCurrentTS(), TimeUtil.getCurrentRTS(), TimeUtil.secondsInADay);
+        const currentRTS = TimeUtil.getCurrentRTS();
+
+        timingsArray.forEach((timing, index) => {
+            timingsArray[index].timingHandler = setTimeout(handleTiming, TimeUtil.getDifference(timingsArray[index].rts) * 1000, index);
+        })
+    }
+
+    var handleTiming = function (index) {
+        statusModel.set(timingsArray[index].channel, timingsArray[index].status)
+            .then(() => {
+                clearTimeout(timingsArray[index].timingHandler);
+                timingsArray[index].timingHandler = setTimeout(handleTiming, TimeUtil.getDifference(timingsArray[index].rts) * 1000, index);
+            })
+            .catch((error) => { console.log(error) })
     }
 
     var clearTimingsKeys = function () {
@@ -96,8 +108,6 @@ module.exports = function (config, redisClient, statusModel) {
         ).join(config.getEnv("redisKeySeparator"))
     }
 
-
-
     var sortTimingsArray = function (t1, t2) {
         return t1.rts - t2.rts;
     }
@@ -106,7 +116,8 @@ module.exports = function (config, redisClient, statusModel) {
         return {
             channel: channel,
             rts: TimeUtil.timeString2rts(timingObject.time),
-            status: timingObject.status
+            status: timingObject.status,
+            timingHandler: {}
         }
     }
 
@@ -116,7 +127,8 @@ module.exports = function (config, redisClient, statusModel) {
         return {
             channel: keyArr[1],
             rts: Number.parseInt(keyArr[2]),
-            status: value
+            status: value,
+            timer: {}
         }
     }
 
