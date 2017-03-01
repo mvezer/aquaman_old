@@ -22,11 +22,16 @@ module.exports = function (config) {
     }
 
     var set = function (key, value) {
+        console.log("redis setting %s to %s", key, value)
         return client.set(key, value);
     }
 
     var get = function (key) {
         return client.get(key);
+    }
+
+    var getKeys = function(prefix) {
+        return  prefix ? client.send_command("KEYS") : client.send_command("KEYS", prefix + config.getEnv("redisKeySeparator"));
     }
 
     return {

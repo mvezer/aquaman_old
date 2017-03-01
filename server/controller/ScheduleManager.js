@@ -1,25 +1,47 @@
 const ConfigUtil = require("../util/ConfigUtil")
 
-module.exports = function (config) {
+module.exports = function (config, redisClient, statusModel) {
     var config = config;
-    var timingArray = [];
+    var statusModel = statusModel;
+    var redisClient = redisClient;
+    var timingsArray = [];
 
     var init = function () {
 
     }
 
     var update = function (schedulerObj) {
-        timingArray = [];
+        timings = [];
         ConfigUtil.obj2array(schedulerObj.channels).forEach((channel) => {
             var channelId = channel.channel_id;
             ConfigUtil.obj2array(channel.timings).forEach((timingObject) => {
                 //console.log("Channel \"%s\" at %s is set to %s", channelId, t.time, t.status);
-                timingArray.push(createTimingItem(channelId, timingObject));
+                timings.push(createTimingItem(channelId, timingObject));
             });
         })
 
-        timingArray.sort(sortTimingsArray);
-        console.log(timingArray);
+        timings.sort(sortTimingsArray);
+        console.log(timings);
+        return storeTimings(timings);
+    }
+
+    var storeTimings = function (timings) {
+        let promises = [];
+
+        timings.forEach((timingItem) => {
+            console.log(createKeyFromTimingItem(timingItem));
+            promises.push(redisClient.set(createKeyFromTimingItem(timingItem),String(timingItem.status)));
+        });
+
+        return Promise.all(promises);
+    }
+
+    var createKeyFromTimingItem = function (timingItem) {
+        return Array(
+            config.getEnv("redisTimingsKeyPrefix"),
+            timingItem.channel,
+            String(timingItem.rts)
+        ).join(config.getEnv("redisKeySeparator"))
     }
 
     var timeString2rts = function (timestr) {

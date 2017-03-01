@@ -11,7 +11,7 @@ const server = new HttpServer(config.fill(["httpHost", "httpPort"]));
 const redisClient = new RedisClient(config);
 
 const statusModel = new StatusModel(config.fill(["redisKeySeparator", "redisStatusKeyPrefix"]), redisClient, null);
-const scheduleManager = new ScheduleManager();
+const scheduleManager = new ScheduleManager(config, redisClient, statusModel);
 
 redisClient.connect()
     .then(() => { statusModel.init() })
