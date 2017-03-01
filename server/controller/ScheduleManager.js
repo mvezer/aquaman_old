@@ -21,10 +21,47 @@ module.exports = function (config, redisClient, statusModel) {
                 })
                 .then(() => {
                     reset(timings);
-                    resolve();
+
+                    let promises = [];
+                    promises.push(statusModel.set("light", getCurrentState("light")));
+                    promises.push(statusModel.set("co2", getCurrentState("co2")));
+                    promises.push(statusModel.set("filter", getCurrentState("filter")));
+
+                    return Promise.all(promises);
                 })
+                .then(() => { resolve() })
                 .catch((error) => { reject(error) });
         });
+    }
+
+    var getCurrentState = function (channel) {
+        const currentRTS = TimeUtil.getCurrentRTS();
+
+        let lowerIndex = -1;
+        let higherIndex = -1;
+
+        let i = 0;
+        while (i < timingsArray.length && (lowerIndex == -1 || higherIndex == -1)) {
+            if (channel == timingsArray[i].channel) {
+                if (timingsArray[i].rts <= currentRTS) {
+                    lowerIndex = i;
+                } else {
+                    higherIndex = i;
+                }
+            }
+
+            i++;
+        }
+
+        if (lowerIndex > -1) {
+            return timingsArray[lowerIndex].status;
+        }
+
+        if (higherIndex > -1) {
+            return timingsArray[higherIndex].status;
+        }
+
+        return (true);
     }
 
     var getTimingsKeys = function () {
@@ -69,6 +106,7 @@ module.exports = function (config, redisClient, statusModel) {
     }
 
     var update = function (schedulerObj) {
+        console.log("updating");
         return new Promise((resolve, reject) => {
             timings = [];
             clearTimingsKeys()
@@ -83,6 +121,7 @@ module.exports = function (config, redisClient, statusModel) {
                     return storeTimings(timings);
                 })
                 .then(() => {
+                    console.log("store done");
                     reset(timings);
                     resolve()
                 })
