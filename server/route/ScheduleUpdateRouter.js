@@ -4,7 +4,7 @@ module.exports = function (scheduleManager) {
     var handler = function (request, reply) {
         scheduleManager.update(request.payload)
             .then(() => { reply(JSON.stringify({ "status": "ok" })).code(200) })
-            .catch((error) => { reply(JSON.stringify({ "status": "error", "message": e })).code(200) });
+            .catch((error) => { reply(JSON.stringify({ "status": "error", "message": error.message })).code(200) });
 
     }
 
