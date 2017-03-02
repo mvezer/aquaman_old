@@ -9,18 +9,22 @@ module.exports = function (config, redisClient, statusModel) {
 
     var init = function () {
         return new Promise((resolve, reject) => {
-            let timings = [];
+            timingsArray = [];
             getTimingsKeys()
                 .then((keys) => {
-                    let promises = [];
-                    keys.forEach((key) => {
-                        promises.push(redisClient.get(key).then((value) => { timings.push(createTimingItemFromKey(key, value)) }));
-                    })
+                    if (keys.length) {
+                        let promises = [];
+                        keys.forEach((key) => {
+                            promises.push(redisClient.get(key).then((value) => { timingsArray.push(createTimingItemFromKey(key, value)) }));
+                        })
 
-                    return Promise.all(promises);
+                        return Promise.all(promises);
+                    } else {
+                        return update(config.getEnv("defaultSchedule"));
+                    }
                 })
                 .then(() => {
-                    reset(timings);
+                    start();
 
                     let promises = [];
                     promises.push(statusModel.set("light", getCurrentState("light")));
@@ -68,9 +72,8 @@ module.exports = function (config, redisClient, statusModel) {
         return redisClient.getKeys(config.getEnv("redisTimingsKeyPrefix"))
     }
 
-    var reset = function (timings) {
-        timings.sort(sortTimingsArray);
-        timingsArray = timings;
+    var start = function () {
+        timingsArray.sort(sortTimingsArray);
 
         const currentRTS = TimeUtil.getCurrentRTS();
 
@@ -106,23 +109,21 @@ module.exports = function (config, redisClient, statusModel) {
     }
 
     var update = function (schedulerObj) {
-        console.log("updating");
         return new Promise((resolve, reject) => {
-            timings = [];
+            timingsArray = [];
             clearTimingsKeys()
                 .then(() => {
                     ConfigUtil.obj2array(schedulerObj.channels).forEach((channel) => {
                         var channelId = channel.channel_id;
                         ConfigUtil.obj2array(channel.timings).forEach((timingObject) => {
-                            timings.push(createTimingItem(channelId, timingObject));
+                            timingsArray.push(createTimingItem(channelId, timingObject));
                         });
                     })
 
-                    return storeTimings(timings);
+                    return storeTimings();
                 })
                 .then(() => {
-                    console.log("store done");
-                    reset(timings);
+                    start();
                     resolve()
                 })
                 .catch((error) => { reject(error) });
@@ -130,9 +131,9 @@ module.exports = function (config, redisClient, statusModel) {
 
     }
 
-    var storeTimings = function (timings) {
+    var storeTimings = function () {
         let pipeline = redisClient.getPipeline();
-        timings.forEach((timingItem) => {
+        timingsArray.forEach((timingItem) => {
             pipeline.set(createKeyFromTimingItem(timingItem), String(timingItem.status));
         });
 
