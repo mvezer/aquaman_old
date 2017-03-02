@@ -1,4 +1,5 @@
 const ConfigUtil = require("../util/ConfigUtil");
+const ArrayUtil = require("../util/ArrayUtil");
 const NConf = require("nconf");
 
 module.exports = function (configFileName) {
@@ -23,7 +24,7 @@ module.exports = function (configFileName) {
     var fill = function (source) {
         let obj = {};
 
-        if (Object.prototype.toString.call(source) === '[object Array]') {
+        if (ArrayUtil.isArray(source)) {
             source.forEach((property) => { obj[property] = this.getEnv(property) });
         } else {
             for (property in obj) {

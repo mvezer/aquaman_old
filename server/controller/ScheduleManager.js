@@ -1,4 +1,4 @@
-const ConfigUtil = require("../util/ConfigUtil")
+const ArrayUtil = require("../util/ArrayUtil")
 const TimeUtil = require("../util/TimeUtil")
 
 module.exports = function (config, redisClient, statusModel) {
@@ -113,9 +113,9 @@ module.exports = function (config, redisClient, statusModel) {
             timingsArray = [];
             clearTimingsKeys()
                 .then(() => {
-                    ConfigUtil.obj2array(schedulerObj.channels).forEach((channel) => {
+                    ArrayUtil.obj2array(schedulerObj.channels).forEach((channel) => {
                         var channelId = channel.channel_id;
-                        ConfigUtil.obj2array(channel.timings).forEach((timingObject) => {
+                        ArrayUtil.obj2array(channel.timings).forEach((timingObject) => {
                             timingsArray.push(createTimingItem(channelId, timingObject));
                         });
                     })
