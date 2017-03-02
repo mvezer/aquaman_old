@@ -6,11 +6,12 @@ module.exports = function (config, redisClient, statusModel) {
     var statusModel = statusModel;
     var redisClient = redisClient;
     var timingsArray = [];
+    var overrides = [];
     var channels = [];
 
     var init = function () {
         return new Promise((resolve, reject) => {
-            channels = config.getEnv("channels");
+            channels = config.getEnv("scheduleChannels");
             timingsArray = [];
             getTimingsKeys()
                 .then((keys) => {
@@ -22,7 +23,7 @@ module.exports = function (config, redisClient, statusModel) {
 
                         return Promise.all(promises);
                     } else {
-                        return update(config.getEnv("defaultSchedule"));
+                        return update(config.getEnv("scheduleDefaults"));
                     }
                 })
                 .then(() => {
@@ -35,6 +36,10 @@ module.exports = function (config, redisClient, statusModel) {
                 .then(() => { resolve() })
                 .catch((error) => { reject(error) });
         });
+    }
+
+    var initOverrides = function() {
+
     }
 
     var getCurrentState = function (channel) {
@@ -69,6 +74,10 @@ module.exports = function (config, redisClient, statusModel) {
 
     var getTimingsKeys = function () {
         return redisClient.getKeys(config.getEnv("redisTimingsKeyPrefix"))
+    }
+
+    var getOverridesKeys = function () {
+        return redisClient.getKeys(config.getEnv("redisOverridesKeyPrefix"))
     }
 
     var start = function () {
