@@ -1,4 +1,5 @@
 const ConfigUtil = require("../util/ConfigUtil");
+const ArrayUtil = require("../util/ArrayUtil");
 const Redis = require("ioredis");
 
 module.exports = function (config) {
@@ -30,9 +31,22 @@ module.exports = function (config) {
         return client.get(key);
     }
 
+    var del = function (keys) {
+        if (ArrayUtil.isArray(keys)) {
+            let pipeline = getPipeline();
+            keys.forEach((k) => {
+                pipeline.del(k);
+            })
+
+            return pipeline.exec();
+        }
+
+        return client.del(keys);
+    }
+
 
     var getKeys = function (prefix) {
-        return prefix ? client.send_command("keys", prefix + config.getEnv("redisKeySeparator") + "*") : client.send_command("keys","*");
+        return prefix ? client.send_command("keys", prefix + config.getEnv("redisKeySeparator") + "*") : client.send_command("keys", "*");
     }
 
     var getPipeline = function () {
@@ -45,6 +59,7 @@ module.exports = function (config) {
         client: client,
         set: set,
         get: get,
+        del:del,
         getPipeline: getPipeline,
         getKeys: getKeys
     }

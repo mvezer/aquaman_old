@@ -95,12 +95,7 @@ module.exports = function (config, redisClient, statusModel) {
         return new Promise((resolve, reject) => {
             getTimingsKeys()
                 .then((keys) => {
-                    let pipeline = redisClient.getPipeline();
-                    keys.forEach((key) => {
-                        pipeline.del(key);
-                    })
-
-                    return pipeline.exec();
+                   return redisClient.del(keys);
                 })
                 .then(() => { resolve() })
                 .catch((error) => { reject(error) })
