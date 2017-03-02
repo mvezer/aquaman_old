@@ -10,26 +10,19 @@
     "REDIS_SETTINGS_KEY_PREFIX": "settings",
     "REDIS_STATUS_KEY_PREFIX": "status",
     "REDIS_TIMINGS_KEY_PREFIX": "timings",
+    "CHANNELS": [
+        "co2",
+        "filter",
+        "light"
+    ],
     "DEFAULT_SCHEDULE": {
         "channels": [
             {
                 "channel_id": "light",
                 "timings": [
                     {
-                        "time": "7:00",
+                        "time": "00:00",
                         "status": true
-                    },
-                    {
-                        "time": "10:00",
-                        "status": false
-                    },
-                    {
-                        "time": "17:00",
-                        "status": true
-                    },
-                    {
-                        "time": "21:30",
-                        "status": false
                     }
                 ]
             },
@@ -37,20 +30,8 @@
                 "channel_id": "co2",
                 "timings": [
                     {
-                        "time": "6:00",
+                        "time": "00:00",
                         "status": true
-                    },
-                    {
-                        "time": "9:00",
-                        "status": false
-                    },
-                    {
-                        "time": "16:00",
-                        "status": true
-                    },
-                    {
-                        "time": "20:30",
-                        "status": false
                     }
                 ]
             },
@@ -58,7 +39,7 @@
                 "channel_id": "filter",
                 "timings": [
                     {
-                        "time": "6:00",
+                        "time": "0:00",
                         "status": true
                     }
                 ]

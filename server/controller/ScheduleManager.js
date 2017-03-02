@@ -6,9 +6,11 @@ module.exports = function (config, redisClient, statusModel) {
     var statusModel = statusModel;
     var redisClient = redisClient;
     var timingsArray = [];
+    var channels = [];
 
     var init = function () {
         return new Promise((resolve, reject) => {
+            channels = config.getEnv("channels");
             timingsArray = [];
             getTimingsKeys()
                 .then((keys) => {
@@ -27,10 +29,7 @@ module.exports = function (config, redisClient, statusModel) {
                     start();
 
                     let promises = [];
-                    promises.push(statusModel.set("light", getCurrentState("light")));
-                    promises.push(statusModel.set("co2", getCurrentState("co2")));
-                    promises.push(statusModel.set("filter", getCurrentState("filter")));
-
+                    channels.forEach((ch) => { promises.push(statusModel.set(ch, getCurrentState(ch))); })
                     return Promise.all(promises);
                 })
                 .then(() => { resolve() })
@@ -95,7 +94,7 @@ module.exports = function (config, redisClient, statusModel) {
         return new Promise((resolve, reject) => {
             getTimingsKeys()
                 .then((keys) => {
-                   return redisClient.del(keys);
+                    return redisClient.del(keys);
                 })
                 .then(() => { resolve() })
                 .catch((error) => { reject(error) })
