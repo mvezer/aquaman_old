@@ -5,174 +5,115 @@ module.exports = function (config, redisClient, statusModel) {
     var config = config;
     var statusModel = statusModel;
     var redisClient = redisClient;
-    var timingsArray = [];
+    var _schedule = [];
     var overrides = [];
     var channels = [];
 
+    const timingPrefix = config.getEnv("redisTimingPrefix") + config.getEnv("redisKeySeparator");
+    const channelPrefix = config.getEnv("redisChannelSchedulePrefix") + config.getEnv("redisKeySeparator");
+
     var init = function () {
         return new Promise((resolve, reject) => {
-            channels = config.getEnv("scheduleChannels");
-            timingsArray = [];
-            getTimingsKeys()
-                .then((keys) => {
-                    if (keys.length) {
-                        let promises = [];
-                        keys.forEach((key) => {
-                            promises.push(redisClient.get(key).then((value) => { timingsArray.push(createTimingItemFromKey(key, value)) }));
-                        })
-
-                        return Promise.all(promises);
+            loadFromRedis()
+                .then((schedule) => {
+                    if (schedule.length) {
+                        _schedule = schedule;
+                        resolve();
                     } else {
-                        return update(config.getEnv("scheduleDefaults"));
+                        _schedule = loadFromJSON(config.getEnv("scheduleDefaults"));
+                        return saveToRedis(_schedule);
                     }
                 })
-                .then(() => {
-                    start();
-
-                    let promises = [];
-                    channels.forEach((ch) => { promises.push(statusModel.set(ch, getCurrentState(ch))); })
-                    return Promise.all(promises);
-                })
-                .then(() => { resolve() })
-                .catch((error) => { reject(error) });
-        });
-    }
-
-    var initOverrides = function() {
-
-    }
-
-    var getCurrentState = function (channel) {
-        const currentRTS = TimeUtil.getCurrentRTS();
-
-        let lowerIndex = -1;
-        let higherIndex = -1;
-
-        let i = 0;
-        while (i < timingsArray.length && (lowerIndex == -1 || higherIndex == -1)) {
-            if (channel == timingsArray[i].channel) {
-                if (timingsArray[i].rts <= currentRTS) {
-                    lowerIndex = i;
-                } else {
-                    higherIndex = i;
-                }
-            }
-
-            i++;
-        }
-
-        if (lowerIndex > -1) {
-            return timingsArray[lowerIndex].status;
-        }
-
-        if (higherIndex > -1) {
-            return timingsArray[higherIndex].status;
-        }
-
-        return (true);
-    }
-
-    var getTimingsKeys = function () {
-        return redisClient.getKeys(config.getEnv("redisTimingsKeyPrefix"))
-    }
-
-    var getOverridesKeys = function () {
-        return redisClient.getKeys(config.getEnv("redisOverridesKeyPrefix"))
-    }
-
-    var start = function () {
-        timingsArray.sort(sortTimingsArray);
-
-        const currentRTS = TimeUtil.getCurrentRTS();
-
-        timingsArray.forEach((timing, index) => {
-            timingsArray[index].timingHandler = setTimeout(handleTiming, TimeUtil.getDifference(timingsArray[index].rts) * 1000, index);
+                .then(() => { resolve(); })
+                .catch((error) => { reject(error) })
         })
     }
 
-    var handleTiming = function (index) {
-        statusModel.set(timingsArray[index].channel, timingsArray[index].status)
-            .then(() => {
-                clearTimeout(timingsArray[index].timingHandler);
-                timingsArray[index].timingHandler = setTimeout(handleTiming, TimeUtil.getDifference(timingsArray[index].rts) * 1000, index);
-            })
-            .catch((error) => { console.log(error) })
-    }
-
-    var clearTimingsKeys = function () {
+    var loadFromRedis = function () {
         return new Promise((resolve, reject) => {
-            getTimingsKeys()
-                .then((keys) => {
-                    return redisClient.del(keys);
+            let schedule = [];
+            let channelIds = [];
+            let timingIds = [];
+
+            redisClient.getKeys(channelPrefix)
+                .then((channel_ids) => {
+                    channelIds = channel_ids
+                    let pipe = redisClient.getPipeline();
+                    channel_ids.forEach((key) => {
+                        pipe.smembers(key);
+                    });
+                    return pipe.exec()
                 })
-                .then(() => { resolve() })
-                .catch((error) => { reject(error) })
-        });
-
-    }
-
-    var update = function (schedulerObj) {
-        return new Promise((resolve, reject) => {
-            timingsArray = [];
-            clearTimingsKeys()
-                .then(() => {
-                    ArrayUtil.obj2array(schedulerObj.channels).forEach((channel) => {
-                        var channelId = channel.channel_id;
-                        ArrayUtil.obj2array(channel.timings).forEach((timingObject) => {
-                            timingsArray.push(createTimingItem(channelId, timingObject));
+                .then((timing_ids) => {
+                    timingIds = timing_ids;
+                    let pipe = redisClient.getPipeline();
+                    timing_ids.forEach((inner_ids) => {
+                        let channel = {};
+                        inner_ids[1].forEach((timingId) => {
+                            pipe.hgetall(timingPrefix + timingId);
                         });
                     })
 
-                    return storeTimings();
+                    return pipe.exec();
                 })
-                .then(() => {
-                    start();
-                    resolve()
+                .then((timings) => {
+                    channelIds.forEach((channel_id, channel_index) => {
+                        let channel = {};
+                        channel.channelId = channel_id.split(config.getEnv("redisKeySeparator"))[1];
+                        channel.timings = [];
+                        timingIds[channel_index][1].forEach(() => {
+                            channel.timings.push(timings.shift()[1]);
+                        })
+
+                        schedule.push(channel);
+                    });
+
+                    resolve(schedule);
                 })
                 .catch((error) => { reject(error) });
         })
 
     }
 
-    var storeTimings = function () {
-        let pipeline = redisClient.getPipeline();
-        timingsArray.forEach((timingItem) => {
-            pipeline.set(createKeyFromTimingItem(timingItem), String(timingItem.status));
+    var saveToRedis = function (schedule) {
+        let pipe = redisClient.getPipeline();
+        let timingId = 0;
+        schedule.forEach((channel) => {
+            channel.timings.forEach((timing) => {
+                pipe.hmset(timingPrefix + timingId, timing);
+                pipe.sadd(channelPrefix + channel.channelId, timingId);
+                timingId++;
+            });
         });
 
-        return pipeline.exec();
+        return pipe.exec();
     }
 
-    var createKeyFromTimingItem = function (timingItem) {
-        return Array(
-            config.getEnv("redisTimingsKeyPrefix"),
-            timingItem.channel,
-            String(timingItem.rts)
-        ).join(config.getEnv("redisKeySeparator"))
+    var loadFromJSON = function (inJson) {
+        let schedule = [];
+        ArrayUtil.obj2array(inJson.channels).forEach((inChannel) => {
+            let channel = {};
+            channel.channelId = inChannel.channelId;
+            channel.timings = [];
+            channel.timer = {};
+            ArrayUtil.obj2array(inChannel.timings).forEach((inTiming) => {
+                channel.timings.push({
+                    rts: TimeUtil.timeString2rts(inTiming.rts),
+                    state: inTiming.state,
+                });
+            })
+
+            channel.timings.sort((t0, t1) => { return t0.rts - t1.rts });
+
+            schedule.push(channel);
+        })
+
+        return schedule;
     }
 
-    var sortTimingsArray = function (t1, t2) {
-        return t1.rts - t2.rts;
-    }
-
-    var createTimingItem = function (channel, timingObject) {
-        return {
-            channel: channel,
-            rts: TimeUtil.timeString2rts(timingObject.time),
-            status: timingObject.status,
-            timingHandler: {}
-        }
-    }
-
-    var createTimingItemFromKey = function (key, value) {
-        const keyArr = String(key).split(config.getEnv("redisKeySeparator"));
-
-        return {
-            channel: keyArr[1],
-            rts: Number.parseInt(keyArr[2]),
-            status: value,
-            timer: {}
-        }
+    var update = function (inJSON) {
+        _schedule = loadFromJSON(inJSON);
+        return saveToRedis(_schedule);
     }
 
     return {

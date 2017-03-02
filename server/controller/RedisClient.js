@@ -31,6 +31,10 @@ module.exports = function (config) {
         return client.get(key);
     }
 
+    var mget = function (keys) {
+        return client.send_command("mget", keys);
+    }
+
     var del = function (keys) {
         if (ArrayUtil.isArray(keys)) {
             let pipeline = getPipeline();
@@ -44,14 +48,29 @@ module.exports = function (config) {
         return client.del(keys);
     }
 
+    var saveHash = function (key, obj) {
+        return client.hmset(key, obj);
+    }
+
 
     var getKeys = function (prefix) {
-        return prefix ? client.send_command("keys", prefix + config.getEnv("redisKeySeparator") + "*") : client.send_command("keys", "*");
+        return prefix ? client.keys(prefix + "*") : client.keys("*");
     }
 
     var getPipeline = function () {
         return client.pipeline();
     }
+
+    var prepObj = function (obj) {
+        for (property in obj) {
+            if (obj.hasOwnProperty(property)) {
+                obj[property] = String(obj[property]);
+            }
+        }
+
+        return obj;
+    }
+
 
     return {
         config: config,
@@ -59,9 +78,10 @@ module.exports = function (config) {
         client: client,
         set: set,
         get: get,
-        del:del,
+        del: del,
         getPipeline: getPipeline,
-        getKeys: getKeys
+        getKeys: getKeys,
+        mget:mget
     }
 
 }

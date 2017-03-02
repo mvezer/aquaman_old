@@ -9,8 +9,9 @@
     "REDIS_KEY_SEPARATOR": ":",
     "REDIS_SETTINGS_KEY_PREFIX": "settings",
     "REDIS_STATUS_KEY_PREFIX": "status",
-    "REDIS_TIMINGS_KEY_PREFIX": "timings",
-    "REDIS_OVERRIDES_KEY_PREFIX": "timings",
+    "REDIS_TIMING_PREFIX": "timing",
+    "REDIS_CHANNEL_SCHEDULE_PREFIX": "channel_schedule",
+    "REDIS_OVERRIDE_PREFIX": "override",
     "SCHEDULE_CHANNELS": [
         "co2",
         "filter",
@@ -19,41 +20,41 @@
     "SCHEDULE_DEFAULTS": {
         "channels": [
             {
-                "channel_id": "light",
+                "channelId": "light",
                 "timings": [
                     {
-                        "time": "00:00",
-                        "status": true
+                        "rts": "00:00",
+                        "state": true
                     }
                 ]
             },
             {
-                "channel_id": "co2",
+                "channelId": "co2",
                 "timings": [
                     {
-                        "time": "00:00",
-                        "status": true
+                        "rts": "00:00",
+                        "state": true
                     }
                 ]
             },
             {
-                "channel_id": "filter",
+                "channelId": "filter",
                 "timings": [
                     {
-                        "time": "0:00",
-                        "status": true
+                        "rts": "0:00",
+                        "state": true
                     }
                 ]
             }
         ]
     },
-    "SCHEDULE_OVERRIDES": [
+    "OVERRIDE_DEFAULTS": [
         {
             "override_id": "feeding",
             "timeout": 1200,
             "status_overrides": [
                 {
-                    "channel_id": "filter",
+                    "channelId": "filter",
                     "status": false
                 }
             ]
@@ -63,15 +64,15 @@
             "timeout": 5400,
             "status_overrides": [
                 {
-                    "channel_id": "filter",
+                    "channelId": "filter",
                     "status": false
                 },
                 {
-                    "channel_id": "co2",
+                    "channelId": "co2",
                     "status": false
                 },
                 {
-                    "channel_id": "light",
+                    "channelId": "light",
                     "status": true
                 }
             ]

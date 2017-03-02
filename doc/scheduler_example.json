@@ -1,44 +1,53 @@
 {
     "channels": [
         {
-            "channel_id": "light",
+            "channelId": "light",
             "timings": [
                 {
-                    "time": "7:00",
-                    "status": true
+                    "rts": "11:00",
+                    "state": true
                 },
                 {
-                    "time": "10:00",
-                    "status": false
+                    "rts": "12:00",
+                    "state": false
                 },
                 {
-                    "time": "17:00",
-                    "status": true
+                    "rts": "15:00",
+                    "state": true
                 },
                 {
-                    "time": "21:30",
-                    "status": false
+                    "rts": "21:00",
+                    "state": false
                 }
             ]
         },
         {
-            "channel_id": "co2",
+            "channelId": "co2",
             "timings": [
                 {
-                    "time": "6:00",
-                    "status": true
+                    "rts": "5:00",
+                    "state": true
                 },
                 {
-                    "time": "9:00",
-                    "status": false
+                    "rts": "6:00",
+                    "state": false
                 },
                 {
-                    "time": "16:00",
-                    "status": true
+                    "rts": "12:00",
+                    "state": true
                 },
                 {
-                    "time": "20:30",
-                    "status": false
+                    "rts": "13:30",
+                    "state": false
+                }
+            ]
+        },
+        {
+            "channelId": "filter",
+            "timings": [
+                {
+                    "rts": "8:00",
+                    "state": true
                 }
             ]
         }
