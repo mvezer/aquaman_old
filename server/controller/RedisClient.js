@@ -1,5 +1,5 @@
 const ConfigUtil = require("../util/ConfigUtil");
-const ArrayUtil = require("../util/ArrayUtil");
+const Util = require("../util/Util");
 const Redis = require("ioredis");
 
 module.exports = function (config) {
@@ -36,7 +36,7 @@ module.exports = function (config) {
     }
 
     var del = function (keys) {
-        if (ArrayUtil.isArray(keys)) {
+        if (Util.isArray(keys)) {
             let pipeline = getPipeline();
             keys.forEach((k) => {
                 pipeline.del(k);
