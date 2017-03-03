@@ -10,8 +10,8 @@ module.exports = function (statusModel) {
 
     statusPatchRouter.getRouter = function () {
         return {
-            method: "PUT",
-            path: "/status",
+            method: "POST",
+            path: "/override_activate/:id",
             handler: handler
         }
     }
