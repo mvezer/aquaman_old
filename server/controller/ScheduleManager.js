@@ -1,9 +1,9 @@
 const ArrayUtil = require("../util/ArrayUtil")
 const TimeUtil = require("../util/TimeUtil")
 
-module.exports = function (config, redisClient, statusModel) {
+module.exports = function (config, redisClient, channelModel) {
     var config = config;
-    var statusModel = statusModel;
+    var channelModel = channelModel;
     var redisClient = redisClient;
     var _schedule = [];
     var overrides = [];

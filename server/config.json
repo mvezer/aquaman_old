@@ -8,7 +8,7 @@
     "REDIS_FAMILY": 0,
     "REDIS_KEY_SEPARATOR": ":",
     "REDIS_SETTINGS_KEY_PREFIX": "settings",
-    "REDIS_STATUS_KEY_PREFIX": "status",
+    "REDIS_CHANNEL_STATE_KEY_PREFIX": "channel_state",
     "REDIS_TIMING_PREFIX": "timing",
     "REDIS_CHANNEL_SCHEDULE_PREFIX": "channel_schedule",
     "REDIS_OVERRIDE_PREFIX": "override",

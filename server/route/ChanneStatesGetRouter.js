@@ -1,8 +1,8 @@
-module.exports = function (statusModel) {
-    var statusModel = statusModel;
+module.exports = function (channelModel) {
+    var channelModel = channelModel;
 
     var handler = function (request, reply) {
-        return reply(JSON.stringify(statusModel.getStatus())).code(200);
+        return reply(JSON.stringify(channelModel.getStates())).code(200);
     }
 
     var getRouter = function () {

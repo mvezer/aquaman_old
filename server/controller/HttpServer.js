@@ -8,7 +8,7 @@ module.exports = function (config) {
 
     var connect = function () {
         server = new Hapi.Server();
-        server.connection({ host: config.httpHost, port: config.httpPort });
+        server.connection({ host: config.getEnv("httpHost"), port: config.getEnv("httpPort") });
         //this.config.httpServerPlugins.forEach((plugin) => { this.server.register(plugin) }, this);
         return this;
     }

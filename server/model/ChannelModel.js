@@ -1,13 +1,13 @@
 module.exports = function (config, redisClient, rpiService) {
-    var status = { filter: false, light: true, co2: true };
+    var channelStates = {};
     var redisClient = redisClient;
     var rpiService = rpiService;
 
     var init = function () {
         return new Promise(function (resolve, reject) {
             let promises = [];
-            for (let key in status) {
-                if (status.hasOwnProperty(key)) {
+            for (let key in channelStates) {
+                if (channelStates.hasOwnProperty(key)) {
                     promises.push(redisClient.get(getKey(key)).then((value) => { status[key] = value }));
                 }
             }
@@ -18,15 +18,15 @@ module.exports = function (config, redisClient, rpiService) {
         });
     }
 
-    var get = function (key) {
-        return this.status[key];
+    var get = function (channel) {
+        return this.status[channel];
     }
 
-    var set = function (key, value) {
+    var set = function (channel, state) {
         return new Promise((resolve, reject) => {
-            if (status[key] != value) {
-                redisClient.set(getKey(key), value)
-                    .then(() => { status[key] = value; resolve() })
+            if (channelStates[channel] != state) {
+                redisClient.set(getKey(channel), value)
+                    .then(() => { channelStates[channel] = state; resolve() })
                     .catch((error) => { reject(error) })
             } else {
                 resolve();
@@ -35,19 +35,17 @@ module.exports = function (config, redisClient, rpiService) {
     }
 
     var getKey = function (id) {
-        return config.redisStatusKeyPrefix + config.redisKeySeparator + String(id);
+        return config.getEnv("redisChannelStatePrefix") + config.getEnv("redisKeySeparator") + String(id);
     }
 
-
-
-    var getStatus = function () {
-        return status;
+    var getStates = function () {
+        return channelStates;
     }
 
     return {
         get: get,
         set: set,
-        getStatus: getStatus,
+        getStates: getStates,
         init: init
     }
 }
