@@ -103,7 +103,7 @@ module.exports = function (config, redisClient, channelModel) {
                     state: inTiming.state,
                 });
             })
-            channel.timings = channel.timings.map(Number);
+            
             channel.timings.sort((t0, t1) => { return t0.rts - t1.rts });
 
             schedule[inChannel.channelId] = channel;

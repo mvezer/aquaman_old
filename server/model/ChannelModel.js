@@ -35,7 +35,7 @@ module.exports = function (config, redisClient, rpiService) {
     }
 
     var getKey = function (id) {
-        return config.getEnv("redisChannelStatePrefix") + config.getEnv("redisKeySeparator") + String(id);
+        return config.getEnv("redisChannelStateKeyPrefix") + config.getEnv("redisKeySeparator") + String(id);
     }
 
     var getStates = function () {

@@ -1,6 +1,7 @@
 const HttpServer = require("./controller/HttpServer");
 const RedisClient = require("./controller/RedisClient");
 const ScheduleManager = require("./controller/ScheduleManager");
+const OverrideManager = require("./controller/OverrideManager");
 
 const Config = require("./model/ConfigModel");
 const ChannelModel = require("./model/ChannelModel");
@@ -11,11 +12,12 @@ const server = new HttpServer(config);
 const redisClient = new RedisClient(config);
 
 const channelModel = new ChannelModel(config, redisClient, null);
+const overrideManager = new OverrideManager(config, redisClient);
 const scheduleManager = new ScheduleManager(config, redisClient, channelModel);
-
 
 redisClient.connect()
     .then(() => { return channelModel.init() })
+    .then(() => { return overrideManager.init() })
     .then(() => { return scheduleManager.init() })
     .then(() => {
         return server

@@ -7,11 +7,12 @@
     "REDIS_PASSWORD": "guest",
     "REDIS_FAMILY": 0,
     "REDIS_KEY_SEPARATOR": ":",
+
     "REDIS_SETTINGS_KEY_PREFIX": "settings",
+
     "REDIS_CHANNEL_STATE_KEY_PREFIX": "channel_state",
     "REDIS_TIMING_PREFIX": "timing",
     "REDIS_CHANNEL_SCHEDULE_PREFIX": "channel_schedule",
-    "REDIS_OVERRIDE_PREFIX": "override",
     "SCHEDULE_CHANNELS": [
         "co2",
         "filter",
@@ -48,11 +49,15 @@
             }
         ]
     },
+
+    "REDIS_OVERRIDE_PREFIX": "override",
+    "REDIS_OVERRIDE_PROPERTIES_PREFIX": "override_properties",
+    "REDIS_CHANNEL_OVERRIDE_PREFIX": "channel_override",
     "OVERRIDE_DEFAULTS": [
         {
-            "override_id": "feeding",
+            "id": "feeding",
             "timeout": 1200,
-            "status_overrides": [
+            "overrides": [
                 {
                     "channelId": "filter",
                     "status": false
@@ -60,9 +65,9 @@
             ]
         },
         {
-            "override_id": "maintenance",
+            "id": "maintenance",
             "timeout": 5400,
-            "status_overrides": [
+            "overrides": [
                 {
                     "channelId": "filter",
                     "status": false
