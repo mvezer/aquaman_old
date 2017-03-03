@@ -1,13 +1,16 @@
 const Util = require("../util/Util")
 const TimeUtil = require("../util/TimeUtil")
+const EventEmitter = require("events");
 
 module.exports = function (config, redisClient) {
     var config = config;
     var redisClient = redisClient;
 
-    var propertiesPrefix = config.getEnv("redisOverridePropertiesPrefix") + config.getEnv("redisKeySeparator");
-    var channelPrefix = config.getEnv("redisChannelOverridePrefix") + config.getEnv("redisKeySeparator");
-    var overridePrefix = config.getEnv("redisOverridePrefix") + config.getEnv("redisKeySeparator");
+    var event = new EventEmitter();
+
+    const propertiesPrefix = config.getEnv("redisOverridePropertiesPrefix") + config.getEnv("redisKeySeparator");
+    const channelPrefix = config.getEnv("redisChannelOverridePrefix") + config.getEnv("redisKeySeparator");
+    const overridePrefix = config.getEnv("redisOverridePrefix") + config.getEnv("redisKeySeparator");
 
     _overrides = {};
 
@@ -33,11 +36,18 @@ module.exports = function (config, redisClient) {
     }
 
     var activateOverride = function (overrideId) {
-
+        if (!isOverrideActive(_overrides[overrideId])) {
+            _overrides[overrideId].timer = setTimeout(deactivateOverride, _overrides[overrideId].timeout * 1000, overrideId);
+            event.emit("overrideActivated", _overrides[overrideId].overrides);
+        }
     }
 
     var deactivateOverride = function (overrideId) {
-
+        if (isOverrideActive(_overrides[overrideId])) {
+            clearTimeout(_overrides[overrideId].timer)
+            _overrides[overrideId].timer = {};
+            event.emit("overrideDeactivated", _overrides[overrideId].overrides);
+        }
     }
 
     var isOverrideActive = function (overrideId) {
@@ -52,7 +62,6 @@ module.exports = function (config, redisClient) {
                 _overrides[id].overrides.forEach((ovr) => {
                     if (ovr.channelId == channelId) {
                         isOverridden = true;
-                        break;
                     }
                 });
             }
@@ -69,7 +78,6 @@ module.exports = function (config, redisClient) {
                 _overrides[id].overrides.forEach((ovr) => {
                     if (ovr.channelId == channelId) {
                         state = ovr.state;
-                        break;
                     }
                 });
             }

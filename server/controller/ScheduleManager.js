@@ -1,10 +1,11 @@
 const Util = require("../util/Util")
 const TimeUtil = require("../util/TimeUtil")
 
-module.exports = function (config, redisClient, channelModel) {
+module.exports = function (config, redisClient, channelModel, overrideManager) {
     var config = config;
     var channelModel = channelModel;
     var redisClient = redisClient;
+    var overrideManager = overrideManager;
     var _schedule = {};
     var overrides = [];
     var channels = [];
@@ -103,7 +104,7 @@ module.exports = function (config, redisClient, channelModel) {
                     state: inTiming.state,
                 });
             })
-            
+
             channel.timings.sort((t0, t1) => { return t0.rts - t1.rts });
 
             schedule[inChannel.channelId] = channel;
@@ -170,37 +171,52 @@ module.exports = function (config, redisClient, channelModel) {
         }
     }
 
-    var timeoutHandler = function (schedule, channel) {
+    var timeoutHandler = function (schedule, channel, timing) {
         if (schedule[channel].timeout) {
             clearTimeout(schedule[channel].timeout);
         }
 
-        schedule[channel].timeout = setTimeout(timeoutHandler, getNextTimeout(schedule[channel].timings) * 1000, schedule, channel);
+        let nextTiming = getNextTiming(schedule[channel].timings)
+        schedule[channel].timeout = setTimeout(timeoutHandler, getNextTimeout(nextTiming.rts) * 1000, schedule, channel, nextTiming);
+
+        if (timing) {
+            channelModel.set(channel, timing.state);
+        }
     }
 
-    var getNextTimeout = function (timings) {
+    var getNextTiming = function (timings) {
         const currentRTS = TimeUtil.getCurrentRTS();
-        let lo = 0;
-        let hi = 0;
+        let lo = -1;
+        let hi = -1;
         let i = 0;
-        while (i < timings.length && (!lo || !hi)) {
+        while (i < timings.length && (lo == -1 || hi == -1)) {
             if (timings[i].rts < currentRTS) {
-                lo = timings[i].rts;
-            } else {
-                hi = timings[i].rts;
+                lo = i;
+            } else if (timings[i].rts > currentRTS + 1)  {
+                hi = i;
             }
             i++;
         }
 
-        if (hi) {
-            return hi - currentRTS;
+        if (hi != -1) {
+            return timings[hi];
         }
 
-        if (lo) {
-            return TimeUtil.secondsInADay - currentRTS + lo;
+        if (lo != -1) {
+            return timings[lo];
         }
 
-        return TimeUtil.secondsInADay;
+        return timings[0];
+    }
+
+    var getNextTimeout = function (nextRts) {
+        const currentRTS = TimeUtil.getCurrentRTS();
+
+        if (nextRts >= currentRTS) {
+            return (nextRts - currentRTS);
+        } else {
+            return TimeUtil.secondsInADay - currentRTS + nextRts;
+        }
     }
 
     var getCurrentState = function (timings) {

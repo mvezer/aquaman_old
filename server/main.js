@@ -13,7 +13,7 @@ const redisClient = new RedisClient(config);
 
 const channelModel = new ChannelModel(config, redisClient, null);
 const overrideManager = new OverrideManager(config, redisClient);
-const scheduleManager = new ScheduleManager(config, redisClient, channelModel);
+const scheduleManager = new ScheduleManager(config, redisClient, channelModel, overrideManager);
 
 redisClient.connect()
     .then(() => { return channelModel.init() })
