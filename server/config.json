@@ -60,7 +60,7 @@
             "overrides": [
                 {
                     "channelId": "filter",
-                    "status": false
+                    "state": false
                 }
             ]
         },
@@ -70,15 +70,15 @@
             "overrides": [
                 {
                     "channelId": "filter",
-                    "status": false
+                    "state": false
                 },
                 {
                     "channelId": "co2",
-                    "status": false
+                    "state": false
                 },
                 {
                     "channelId": "light",
-                    "status": true
+                    "state": true
                 }
             ]
         }
