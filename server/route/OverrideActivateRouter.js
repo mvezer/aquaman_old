@@ -1,12 +1,14 @@
-module.exports = function () {
+module.exports = function (overrideManager) {
+    var overrideManager = overrideManager;
     var handler = function (request, reply) {
-        reply(message).code(200);
+        overrideManager.activateOverride(request.params.override_id);
+        reply(JSON.stringify({ status: "ok" })).code(200);
     }
 
-    var getRouter = function() {
+    var getRouter = function () {
         return {
-            method: "GET",
-            path: "/",
+            method: "POST",
+            path: "/override_activate/{override_id}",
             handler: handler
         }
     }

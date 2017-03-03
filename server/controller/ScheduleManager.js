@@ -14,6 +14,9 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
     const channelPrefix = config.getEnv("redisChannelSchedulePrefix") + config.getEnv("redisKeySeparator");
 
     var init = function () {
+        overrideManager.event.on("overrideActivated", onOverrideChanged);
+        overrideManager.event.on("overrideDeactivated", onOverrideChanged);
+
         return new Promise((resolve, reject) => {
             loadFromRedis()
                 .then((schedule) => {
@@ -163,10 +166,19 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
         }
     }
 
+    var onOverrideChanged = function (overrides) {
+        initChannels(_schedule)
+    }
+
     var initChannels = function (schedule) {
         for (channel in schedule) {
             if (schedule.hasOwnProperty(channel)) {
-                channelModel.set(channel, getCurrentState(schedule[channel].timings));
+                console.log("Is channel (%s) overridden:", channel, overrideManager.isChannelOverriden(channel));
+                console.log("State by override: ", overrideManager.getChannelOverrideState(channel));
+                console.log("State by schedule: ", getCurrentState(schedule[channel].timings));
+                const channelState = overrideManager.isChannelOverriden(channel)
+                    ? overrideManager.getChannelOverrideState(channel) : getCurrentState(schedule[channel].timings)
+                channelModel.set(channel, channelState);
             }
         }
     }
@@ -192,7 +204,7 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
         while (i < timings.length && (lo == -1 || hi == -1)) {
             if (timings[i].rts < currentRTS) {
                 lo = i;
-            } else if (timings[i].rts > currentRTS + 1)  {
+            } else if (timings[i].rts > currentRTS + 1) {
                 hi = i;
             }
             i++;
@@ -243,8 +255,6 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
 
         return true;
     }
-
-
     return {
         init: init,
         update: update
