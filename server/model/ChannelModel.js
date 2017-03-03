@@ -25,7 +25,7 @@ module.exports = function (config, redisClient, rpiService) {
     var set = function (channel, state) {
         return new Promise((resolve, reject) => {
             if (channelStates[channel] != state) {
-                redisClient.set(getKey(channel), value)
+                redisClient.set(getKey(channel), state)
                     .then(() => { channelStates[channel] = state; resolve() })
                     .catch((error) => { reject(error) })
             } else {
