@@ -17,6 +17,7 @@ module.exports = function (config, redisClient, channelModel) {
             loadFromRedis()
                 .then((schedule) => {
                     if (!Util.isEmpty(schedule)) {
+                        initTimers(_schedule);
                         _schedule = schedule;
                         resolve();
                     } else {
@@ -25,13 +26,17 @@ module.exports = function (config, redisClient, channelModel) {
                         return saveToRedis(_schedule);
                     }
                 })
-                .then(() => { resolve(); })
+                .then(() => {
+                    initTimers(_schedule);
+                    resolve();
+                })
                 .catch((error) => { reject(error) })
         })
     }
 
     var update = function (inJSON) {
         _schedule = loadFromJSON(inJSON);
+        initTimers(_schedule);
         return saveToRedis(_schedule);
     }
 
@@ -68,8 +73,13 @@ module.exports = function (config, redisClient, channelModel) {
                         //channel.channelId = ;
                         channel.timings = [];
                         timingIds[channel_index][1].forEach(() => {
-                            channel.timings.push(timings.shift()[1]);
+                            let t = timings.shift()[1];
+                            t.rts = Number(t.rts);
+                            t.state = (t.state == "true")
+                            channel.timings.push(t);
                         })
+
+                        channel.timings.sort((t0, t1) => { return t0.rts - t1.rts });
 
                         schedule[channel_id.split(config.getEnv("redisKeySeparator"))[1]] = channel;
                     });
@@ -93,7 +103,7 @@ module.exports = function (config, redisClient, channelModel) {
                     state: inTiming.state,
                 });
             })
-
+            channel.timings = channel.timings.map(Number);
             channel.timings.sort((t0, t1) => { return t0.rts - t1.rts });
 
             schedule[inChannel.channelId] = channel;
@@ -146,17 +156,55 @@ module.exports = function (config, redisClient, channelModel) {
 
     var initTimers = function (schedule) {
         for (channel in schedule) {
+
             if (schedule.hasOwnProperty(channel)) {
-                if (schedule[channel].timeout) {
+                console.log(channel + "...")
+                /*if (schedule[channel].timeout) {
                     clearTimeout(schedule[channel].timeout);
                 }
+
+                schedule[channel].timeout = setTimeout(getNextTimeout(schedule[channel].timings));*/
+                timeoutHandler(schedule, channel);
+
             }
         }
     }
 
-    var getNextStateChange = function (channel) {
+    var timeoutHandler = function (schedule, channel) {
+        console.log("Setting timeout: ", channel);
+        if (schedule[channel].timeout) {
+            clearTimeout(schedule[channel].timeout);
+        }
 
+        schedule[channel].timeout = setTimeout(timeoutHandler, getNextTimeout(schedule[channel].timings) * 1000, schedule, channel);
     }
+
+    var getNextTimeout = function (timings) {
+        const currentRTS = TimeUtil.getCurrentRTS();
+        let lo = 0;
+        let hi = 0;
+        let i = 0;
+        while (i < timings.length && (!lo || !hi)) {
+            if (timings[i].rts < currentRTS) {
+                lo = timings[i].rts;
+            } else {
+                hi = timings[i].rts;
+            }
+            i++;
+        }
+
+        if (hi) {
+            return hi - currentRTS;
+        }
+
+        if (lo) {
+            return TimeUtil.secondsInADay - currentRTS + lo;
+        }
+
+        return TimeUtil.secondsInADay;
+    }
+
+
 
     return {
         init: init,
