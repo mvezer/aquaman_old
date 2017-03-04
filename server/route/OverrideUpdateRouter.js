@@ -8,7 +8,7 @@ module.exports = function (overrideManager) {
 
     var getRouter = function () {
         return {
-            method: "UPDATE",
+            method: "PUT",
             path: "/override/update",
             handler: handler
         }

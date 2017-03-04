@@ -32,7 +32,7 @@ module.exports = function (config, redisClient) {
     }
 
     var update = function (inJson) {
-        _overrides = loadFromJSON(config.getEnv("overrideDefaults"));
+        _overrides = loadFromJSON(inJson);
         return saveToRedis(_overrides);
     }
 
@@ -108,21 +108,53 @@ module.exports = function (config, redisClient) {
     }
 
     var saveToRedis = function (overrides) {
-        let pipe = redisClient.getPipeline();
-        let overrideId = 0;
-        for (id in overrides) {
-            if (overrides.hasOwnProperty(id)) {
-                overrideObj = overrides[id]
-                pipe.hmset(propertiesPrefix + id, { timeout: overrideObj.timeout });
-                overrideObj.overrides.forEach((overrideItem) => {
-                    pipe.hmset(overridePrefix + overrideId, overrideItem);
-                    pipe.sadd(channelPrefix + id, overrideId);
-                    overrideId++;
-                })
-            }
-        }
+        return new Promise((resolve, reject) => {
+            clearRedis()
+                .then(() => {
+                    let pipe = redisClient.getPipeline();
+                    let overrideId = 0;
+                    for (id in overrides) {
+                        if (overrides.hasOwnProperty(id)) {
+                            overrideObj = overrides[id]
+                            pipe.hmset(propertiesPrefix + id, { timeout: overrideObj.timeout });
+                            overrideObj.overrides.forEach((overrideItem) => {
+                                pipe.hmset(overridePrefix + overrideId, overrideItem);
+                                pipe.sadd(channelPrefix + id, overrideId);
+                                overrideId++;
+                            })
+                        }
+                    }
 
-        return pipe.exec();
+                    return pipe.exec();
+                })
+                .then(() => {
+                    resolve();
+                })
+                .catch((error) => { reject(error) })
+        })
+    }
+
+    var clearRedis = function () {
+        return new Promise((resolve, reject) => {
+            let promises = [
+                redisClient.getKeys(propertiesPrefix),
+                redisClient.getKeys(channelPrefix),
+                redisClient.getKeys(overridePrefix)
+            ];
+            Promise.all(promises)
+                .then((allKeys) => {
+                    let pipe = redisClient.getPipeline();
+                    allKeys.forEach((keys) => {
+                        keys.forEach((k) => {
+                            pipe.del(k);
+                        })
+                    })
+
+                    return pipe.exec();
+                })
+                .then(() => resolve())
+                .catch((error) => { reject(error) });
+        });
     }
 
     var loadFromRedis = function () {
