@@ -8,7 +8,7 @@ module.exports = function (channelModel) {
     var getRouter = function () {
         return {
             method: "GET",
-            path: "/status",
+            path: "/channel",
             handler: handler
         }
     }

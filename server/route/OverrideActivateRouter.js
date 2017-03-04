@@ -8,7 +8,7 @@ module.exports = function (overrideManager) {
     var getRouter = function () {
         return {
             method: "POST",
-            path: "/override_activate/{override_id}",
+            path: "/override/activate/{override_id}",
             handler: handler
         }
     }
