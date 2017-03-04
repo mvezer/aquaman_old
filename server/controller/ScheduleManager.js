@@ -173,9 +173,6 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
     var initChannels = function (schedule) {
         for (channel in schedule) {
             if (schedule.hasOwnProperty(channel)) {
-                console.log("Is channel (%s) overridden:", channel, overrideManager.isChannelOverriden(channel));
-                console.log("State by override: ", overrideManager.getChannelOverrideState(channel));
-                console.log("State by schedule: ", getCurrentState(schedule[channel].timings));
                 const channelState = overrideManager.isChannelOverriden(channel)
                     ? overrideManager.getChannelOverrideState(channel) : getCurrentState(schedule[channel].timings)
                 channelModel.set(channel, channelState);
