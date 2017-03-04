@@ -32,7 +32,8 @@ module.exports = function (config, redisClient) {
     }
 
     var update = function (inJson) {
-
+        _overrides = loadFromJSON(config.getEnv("overrideDefaults"));
+        return saveToRedis(_overrides);
     }
 
     var activateOverride = function (overrideId) {
