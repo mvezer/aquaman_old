@@ -16,8 +16,8 @@
     "hapi": "^16.1.0",
     "ioredis": "^2.5.0",
     "joi": "^10.2.2",
-    "nconf": "^0.8.4",
-    "rpi-gpio": "^0.7.0"
+    "mc-gpio": "^1.0.4",
+    "nconf": "^0.8.4"
   },
   "devDependencies": {
     "chai": "^3.5.0",

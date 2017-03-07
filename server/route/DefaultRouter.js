@@ -1,6 +1,6 @@
 module.exports = function () {
     var handler = function (request, reply) {
-        reply(message).code(200);
+        reply("Aquaman front-end will be found here soon").code(200);
     }
 
     var getRouter = function() {

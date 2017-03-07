@@ -1,14 +1,21 @@
-module.exports = function (config, redisClient, rpiService) {
-    var channelStates = {};
+var gpio = require("mc-gpio");
+
+module.exports = function (config, redisClient) {
+    var _channelStates = {};
     var redisClient = redisClient;
-    var rpiService = rpiService;
+
+    const _pinMap = {
+        light: parseInt(config.getEnv("rpiLightPin")),
+        filter: parseInt(config.getEnv("rpiFilterPin")),
+        co2: parseInt(config.getEnv("RPI_CO2_PIN"))
+    }
 
     var init = function () {
         return new Promise(function (resolve, reject) {
-            let promises = [];
-            for (let key in channelStates) {
-                if (channelStates.hasOwnProperty(key)) {
-                    promises.push(redisClient.get(getKey(key)).then((value) => { status[key] = value }));
+            let promises = [initRPI(_pinMap)];
+            for (let key in _channelStates) {
+                if (_channelStates.hasOwnProperty(key)) {
+                    promises.push(redisClient.get(getKey(key)).then((value) => { _channelStates[key] = value }));
                 }
             }
 
@@ -16,6 +23,43 @@ module.exports = function (config, redisClient, rpiService) {
                 .then(function (values) { resolve() })
                 .catch((error) => { reject(error) });
         });
+
+
+    }
+
+    var initRPI = function (pinMap) {
+        return new Promise((resolve, reject) => {
+            if (config.getEnv("rpiEnabled")) {
+                for (channel in pinMap) {
+                    if (pinMap.hasOwnProperty(channel)) {
+                        gpio.openPin(pinMap[channel], "out", (error) => {
+                            if (error) {
+                                reject(error);
+                            }
+                        })
+                    }
+                }
+            }
+
+            resolve();
+        })
+    }
+
+    var updateRPI = function (channelStates, pinMap) {
+        return new Promise((resolve, reject) => {
+            if (config.getEnv("rpiEnabled")) {
+                for (let key in channelStates) {
+                    gpio.write(pinMap[key], channelStates[key] ? 0 : 1, (error) => {
+                        if (error) {
+                            reject(error);
+                        }
+                    })
+                }
+            }
+
+            resolve();
+        })
+
     }
 
     var get = function (channel) {
@@ -24,9 +68,13 @@ module.exports = function (config, redisClient, rpiService) {
 
     var set = function (channel, state) {
         return new Promise((resolve, reject) => {
-            if (channelStates[channel] != state) {
+            if (_channelStates[channel] != state) {
                 redisClient.set(getKey(channel), state)
-                    .then(() => { channelStates[channel] = state; resolve() })
+                    .then(() => {
+                        _channelStates[channel] = state;
+                        return updateRPI(_channelStates, _pinMap);
+                    })
+                    .then(() => { resolve() })
                     .catch((error) => { reject(error) })
             } else {
                 resolve();
@@ -39,7 +87,7 @@ module.exports = function (config, redisClient, rpiService) {
     }
 
     var getStates = function () {
-        return channelStates;
+        return _channelStates;
     }
 
     return {
