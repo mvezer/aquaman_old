@@ -39,6 +39,7 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
     }
 
     var update = function (inJSON) {
+        clearTimeouts(_schedule);
         _schedule = loadFromJSON(inJSON);
         initTimers(_schedule);
         initChannels(_schedule);
@@ -136,6 +137,14 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
                 .then(() => { resolve() })
                 .catch((error) => { reject(error) })
         });
+    }
+
+    var clearTimeouts = function (schedule) {
+        for (channel in schedule) {
+            if (schedule.hasOwnProperty(channel)) {
+                clearTimeout(channel.timeout);
+            }
+        }
     }
 
     var clearRedis = function () {
