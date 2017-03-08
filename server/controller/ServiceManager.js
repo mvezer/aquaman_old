@@ -23,10 +23,7 @@ module.exports = function (config, redisClient, serviceMap) {
                     if (!Util.isEmpty(services)) {
                         _services = services;
                         initTimers(_services, _serviceMap);
-                        console.log("loaded from redis")
-                        console.log(_services)
                     } else {
-                        console.log("Loading service defaults")
                         _services = loadFromJSON(config.getEnv("serviceDefaults"));
                         initTimers(_services, _serviceMap);
                         return saveToRedis(_services);
@@ -53,7 +50,6 @@ module.exports = function (config, redisClient, serviceMap) {
     }
 
     var loadFromJSON = function (inJson) {
-        console.log("loading from json");
         let services = {};
         inJson.forEach((serviceSettings) => {
             let serviceObj = {};
@@ -66,12 +62,10 @@ module.exports = function (config, redisClient, serviceMap) {
 
             services[serviceSettings.id] = serviceObj;
         })
-        console.log(services);
         return services;
     }
 
     var loadFromRedis = function () {
-        console.log("loadiong from redis");
         return new Promise((resolve, reject) => {
             let services = {};
             let serviceIds = [];

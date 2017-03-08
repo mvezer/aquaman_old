@@ -88,7 +88,7 @@
     "SERVICE_DEFAULTS": [
         {
             "id": "camera",
-            "period": 10,
+            "period": 1800,
             "channels": [
                 {
                     "id": "light",
