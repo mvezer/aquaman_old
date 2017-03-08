@@ -14,6 +14,11 @@ module.exports = function (config, redisClient) {
 
     _overrides = {};
 
+    var getOverrides = function() {
+        return _overrides;
+    }
+
+
     var init = function () {
         return new Promise((resolve, reject) => {
             loadFromRedis()
@@ -221,7 +226,8 @@ module.exports = function (config, redisClient) {
         activateOverride: activateOverride,
         deactivateOverride: deactivateOverride,
         isChannelOverriden: isChannelOverriden,
-        getChannelOverrideState: getChannelOverrideState
+        getChannelOverrideState: getChannelOverrideState,
+        getOverrides:getOverrides
     }
 }
 
