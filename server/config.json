@@ -106,6 +106,7 @@
     "RPI_FILTER_PIN": 3,
     "RPI_CO2_PIN": 2,
 
+    "PHOTO_BASE_FILENAME":"aquaman_",
     "PHOTO_PATH":"../images",
     "PHOTO_WIDTH":2592,
     "PHOTO_HEIGHT":1944,

@@ -89,7 +89,7 @@ module.exports = function (config) {
     }
 
     var getFileName = function () {
-        return "photo_" + TimeUtil.getCurrentRTS() + "." + config.getEnv("photoEncoding");
+        return config.getEnv("photoBaseFilename") + TimeUtil.getCurrentRTS() + "." + config.getEnv("photoEncoding");
     }
 
     return {
