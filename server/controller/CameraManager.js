@@ -2,6 +2,7 @@ const RaspiCam = require("raspicam");
 const path = require("path");
 const TimeUtil = require("../util/TimeUtil")
 const Flickr = require("flickrapi");
+const fs = require("fs");
 
 module.exports = function (config) {
     var config = config;
@@ -72,11 +73,17 @@ module.exports = function (config) {
 
             Flickr.upload(uploadOptions, _flickrOptions, function (err, result) {
                 if (err) {
-                    return console.error(error);
+                    return console.error(err);
                 }
-                console.log("photos uploaded", result);
-                _photoFileName = "";
-                _state = "";
+                console.log("photo uploaded", result);
+                fs.unlink(_photoFileName, (ulErr) => {
+                    if (ulErr) {
+                        console.log(ulErr);
+                    } else {
+                        _photoFileName = "";
+                        _state = "";
+                    }
+                })
             });
         });
     }
