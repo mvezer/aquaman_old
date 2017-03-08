@@ -53,7 +53,7 @@ module.exports = function (config, redisClient, serviceMap) {
 
     var update = function (inJson) {
         _services = loadFromJSON(inJson);
-        initTimers(_services);
+        initTimers(_services, _serviceMap);
         return saveToRedis(_services);
     }
 
