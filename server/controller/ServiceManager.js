@@ -15,6 +15,23 @@ module.exports = function (config, redisClient, serviceMap) {
     const channelsPrefix = config.getEnv("redisServiceChannelsPrefix") + config.getEnv("redisKeySeparator");
     const servicePrefix = config.getEnv("redisServicePrefix") + config.getEnv("redisKeySeparator");
 
+    var getServices = function () {
+        
+        var returnObj = {};
+
+        for (id in _services) {
+            if (_services.hasOwnProperty(id)) {
+                returnObj[id] = {};
+                returnObj[id].channels = [];
+                returnObj[id].period = _services[id].period;
+                _services[id].channels.forEach((channel)=>{
+                    returnObj[id].channels.push(channel);
+                })
+            }
+            
+        }
+        return returnObj;
+    }
 
     var init = function () {
         return new Promise((resolve, reject) => {
@@ -175,6 +192,7 @@ module.exports = function (config, redisClient, serviceMap) {
 
     return {
         init: init,
-        update: update
+        update: update,
+        getServices: getServices
     }
 }
