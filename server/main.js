@@ -40,7 +40,7 @@ redisClient.connect()
             .addRoute(require("./route/ServiceUpdateRouter"), serviceManager)
             .start()
     })
-    .then(() => { console.log("HTTP server connected") })
+    .then(() => { console.log("HTTP server connected: ", config.getEnv("httpHost")) })
     .catch((error) => {
         console.log(error);
     })

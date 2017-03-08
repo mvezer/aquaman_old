@@ -21,7 +21,7 @@ module.exports = function (config) {
     var _state = "";
 
     var shoot = function () {
-        if (!config.getEnv("rpiEnabled")) {
+        if (config.getEnv("nodeEnv") != "production") {
             return;
         }
 

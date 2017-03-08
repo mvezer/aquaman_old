@@ -1,5 +1,4 @@
 {
-    "NODE_ENV": "dev",
     "HTTP_HOST": "localhost",
     "HTTP_PORT": 3000,
     "REDIS_HOST": "localhost",
@@ -101,7 +100,6 @@
             ]
         }
     ],
-    "RPI_ENABLED": false,
     "RPI_LIGHT_PIN": 4,
     "RPI_FILTER_PIN": 3,
     "RPI_CO2_PIN": 2,

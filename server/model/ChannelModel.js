@@ -29,7 +29,8 @@ module.exports = function (config, redisClient) {
 
     var initRPI = function (pinMap) {
         return new Promise((resolve, reject) => {
-            if (config.getEnv("rpiEnabled")) {
+            console.log(config.getEnv("nodeEnv"));
+            if (config.getEnv("nodeEnv") == "production") {
                 for (channel in pinMap) {
                     if (pinMap.hasOwnProperty(channel)) {
                         gpio.openPin(pinMap[channel], "out", (error) => {
@@ -47,7 +48,7 @@ module.exports = function (config, redisClient) {
 
     var updateRPI = function (channelStates, pinMap) {
         return new Promise((resolve, reject) => {
-            if (config.getEnv("rpiEnabled")) {
+            if (config.getEnv("nodeEnv") == "production") {
                 for (let key in channelStates) {
                     gpio.write(pinMap[key], channelStates[key] ? 0 : 1, (error) => {
                         if (error) {
