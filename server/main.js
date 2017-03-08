@@ -17,7 +17,7 @@ const channelModel = new ChannelModel(config, redisClient, null);
 const overrideManager = new OverrideManager(config, redisClient);
 const scheduleManager = new ScheduleManager(config, redisClient, channelModel, overrideManager);
 const cameraManager = new CameraManager(config);
-const serviceManager = new ServiceManager(config, redisClient, { camera: cameraManager.shoot });
+const serviceManager = new ServiceManager(config, redisClient, channelModel, { camera: cameraManager.shoot });
 
 redisClient.connect()
     .then(() => { return channelModel.init() })

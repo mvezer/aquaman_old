@@ -1,10 +1,11 @@
-module.exports = function (config, redisClient, serviceMap) {
+module.exports = function (config, redisClient, channelModel, serviceMap) {
     const Util = require("../util/Util")
     const TimeUtil = require("../util/TimeUtil")
     const EventEmitter = require("events");
 
     var config = config;
     var redisClient = redisClient;
+    var channelModel = channelModel;
     var _serviceMap = serviceMap;
 
     var event = new EventEmitter();
@@ -16,7 +17,7 @@ module.exports = function (config, redisClient, serviceMap) {
     const servicePrefix = config.getEnv("redisServicePrefix") + config.getEnv("redisKeySeparator");
 
     var getServices = function () {
-        
+
         var returnObj = {};
 
         for (id in _services) {
@@ -24,11 +25,11 @@ module.exports = function (config, redisClient, serviceMap) {
                 returnObj[id] = {};
                 returnObj[id].channels = [];
                 returnObj[id].period = _services[id].period;
-                _services[id].channels.forEach((channel)=>{
+                _services[id].channels.forEach((channel) => {
                     returnObj[id].channels.push(channel);
                 })
             }
-            
+
         }
         return returnObj;
     }
@@ -39,6 +40,7 @@ module.exports = function (config, redisClient, serviceMap) {
                 .then((services) => {
                     if (!Util.isEmpty(services)) {
                         _services = services;
+                        clearTimers(_services);
                         initTimers(_services, _serviceMap);
                     } else {
                         _services = loadFromJSON(config.getEnv("serviceDefaults"));
@@ -52,6 +54,7 @@ module.exports = function (config, redisClient, serviceMap) {
     }
 
     var update = function (inJson) {
+        clearTimers(_services);
         _services = loadFromJSON(inJson);
         initTimers(_services, _serviceMap);
         return saveToRedis(_services);
@@ -60,9 +63,29 @@ module.exports = function (config, redisClient, serviceMap) {
     var initTimers = function (services, serviceMap) {
         for (id in services) {
             if (services.hasOwnProperty(id)) {
-                clearInterval(services[id].timer);
-                services[id].timer = setInterval(serviceMap[id], services[id].period * 1000, services, id)
+                services[id].timer = setInterval(onTimer, services[id].period * 1000, services, id, serviceMap[id])
             }
+        }
+    }
+
+    var clearTimers = function (services) {
+        for (id in services) {
+            if (services.hasOwnProperty(id)) {
+                clearInterval(services[id].timer);
+            }
+        }
+    }
+
+    var onTimer = function (services, id, callback) {
+        var enabled = true;
+        services[id].channels.forEach((channel) => {
+            if (enabled && channel.state != channelModel.get(channel.id)) {
+                enabled = false
+            }
+        })
+
+        if (enabled) {
+            callback(id);
         }
     }
 

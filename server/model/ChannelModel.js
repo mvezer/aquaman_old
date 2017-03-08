@@ -63,7 +63,7 @@ module.exports = function (config, redisClient) {
     }
 
     var get = function (channel) {
-        return this.status[channel];
+        return _channelStates[channel];
     }
 
     var set = function (channel, state) {
