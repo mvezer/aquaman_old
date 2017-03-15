@@ -21,8 +21,8 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
         return new Promise((resolve, reject) => {
             loadFromRedis()
                 .then((_schedule) => {
-                    if (!Util.isEmpty(schedule)) {
-                        schedule = schedule;
+                    if (!Util.isEmpty(_schedule)) {
+                        schedule = _schedule;
                         console.log(schedule);
                         resolve();
                     } else {
@@ -112,7 +112,7 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
         return schedule;
     }
 
-    var saveToRedis = function (schedule) {
+    var saveToRedis = function () {
         return new Promise((resolve, reject) => {
             let pipe = redisClient.getPipeline();
             let timingId = 0;
