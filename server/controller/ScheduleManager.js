@@ -243,7 +243,7 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
         let hi = -1;
         let i = 0;
         while (i < timings.length && (lo == -1 || hi == -1)) {
-            if (timings[i].rts < currentRTS) {
+            if (timings[i].rts <= currentRTS) {
                 lo = i;
             } else {
                 hi = i;
@@ -265,6 +265,7 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
         init: init,
         update: update,
 
-        _getNextTiming:getNextTiming
+        _getNextTiming:getNextTiming,
+        _getCurrentState:getCurrentState,
     }
 }
