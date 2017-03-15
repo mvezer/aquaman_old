@@ -10,40 +10,28 @@
     "REDIS_CHANNEL_STATE_KEY_PREFIX": "channel_state",
     "REDIS_TIMING_PREFIX": "timing",
     "REDIS_CHANNEL_SCHEDULE_PREFIX": "channel_schedule",
-    
     "SCHEDULE_CHANNELS": [
         "co2",
         "filter",
         "light"
     ],
     "SCHEDULE_DEFAULTS": {
-        "channels": [
+        "light": [
             {
-                "channelId": "light",
-                "timings": [
-                    {
-                        "rts": "00:00",
-                        "state": true
-                    }
-                ]
-            },
+                "rts": "00:00",
+                "state": true
+            }
+        ],
+        "co2": [
             {
-                "channelId": "co2",
-                "timings": [
-                    {
-                        "rts": "00:00",
-                        "state": true
-                    }
-                ]
-            },
+                "rts": "00:00",
+                "state": true
+            }
+        ],
+        "filter": [
             {
-                "channelId": "filter",
-                "timings": [
-                    {
-                        "rts": "0:00",
-                        "state": true
-                    }
-                ]
+                "rts": "00:00",
+                "state": true
             }
         ]
     },
@@ -80,7 +68,6 @@
             ]
         }
     ],
-
     "REDIS_SERVICE_PREFIX": "service",
     "REDIS_SERVICE_PROPERTIES_PREFIX": "service_properties",
     "REDIS_SERVICE_CHANNELS_PREFIX": "service_channels",
@@ -103,11 +90,10 @@
     "RPI_LIGHT_PIN": 4,
     "RPI_FILTER_PIN": 3,
     "RPI_CO2_PIN": 2,
-
-    "PHOTO_BASE_FILENAME":"aquaman_",
-    "PHOTO_PATH":"../images",
-    "PHOTO_WIDTH":2592,
-    "PHOTO_HEIGHT":1944,
-    "PHOTO_QUALITY":80,
-    "PHOTO_ENCODING":"jpg"
+    "PHOTO_BASE_FILENAME": "aquaman_",
+    "PHOTO_PATH": "../images",
+    "PHOTO_WIDTH": 2592,
+    "PHOTO_HEIGHT": 1944,
+    "PHOTO_QUALITY": 80,
+    "PHOTO_ENCODING": "jpg"
 }
