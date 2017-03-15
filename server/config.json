@@ -38,36 +38,22 @@
     "REDIS_OVERRIDE_PREFIX": "override",
     "REDIS_OVERRIDE_PROPERTIES_PREFIX": "override_properties",
     "REDIS_CHANNEL_OVERRIDE_PREFIX": "channel_override",
-    "OVERRIDE_DEFAULTS": [
-        {
-            "id": "feeding",
+    "OVERRIDE_DEFAULTS": {
+        "feeding": {
             "timeout": 30,
-            "overrides": [
-                {
-                    "channelId": "filter",
-                    "state": false
-                }
-            ]
+            "channels": {
+                "filter": false
+            }
         },
-        {
-            "id": "maintenance",
+        "maintenance": {
             "timeout": 30,
-            "overrides": [
-                {
-                    "channelId": "filter",
-                    "state": false
-                },
-                {
-                    "channelId": "co2",
-                    "state": false
-                },
-                {
-                    "channelId": "light",
-                    "state": true
-                }
-            ]
+            "channels": {
+                "filter": false,
+                "co2": false,
+                "light": true
+            }
         }
-    ],
+    },
     "REDIS_SERVICE_PREFIX": "service",
     "REDIS_SERVICE_PROPERTIES_PREFIX": "service_properties",
     "REDIS_SERVICE_CHANNELS_PREFIX": "service_channels",

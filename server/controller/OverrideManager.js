@@ -12,9 +12,10 @@ module.exports = function (config, redisClient) {
     const channelPrefix = config.getEnv("redisChannelOverridePrefix") + config.getEnv("redisKeySeparator");
     const overridePrefix = config.getEnv("redisOverridePrefix") + config.getEnv("redisKeySeparator");
 
-    _overrides = {};
+    overrides = {};
+    timeouts = {};
 
-    var getOverrides = function() {
+    var getOverrides = function () {
         return _overrides;
     }
 
@@ -22,13 +23,14 @@ module.exports = function (config, redisClient) {
     var init = function () {
         return new Promise((resolve, reject) => {
             loadFromRedis()
-                .then((overrides) => {
-                    if (!Util.isEmpty(overrides)) {
-                        _overrides = overrides;
+                .then((_overrides) => {
+                    if (!Util.isEmpty(_overrides)) {
+                        overrides = _overrides;
                     } else {
                         console.log("Loading override defaults")
-                        _overrides = loadFromJSON(config.getEnv("overrideDefaults"));
-                        return saveToRedis(_overrides);
+                        overrides = loadFromJSON(config.getEnv("overrideDefaults"));
+                        console.log(overrides);
+                        return saveToRedis();
                     }
                 })
                 .then(() => { resolve() })
@@ -37,42 +39,41 @@ module.exports = function (config, redisClient) {
     }
 
     var update = function (inJson) {
-        _overrides = loadFromJSON(inJson);
-        return saveToRedis(_overrides);
+        overrides = loadFromJSON(inJson);
+        return saveToRedis();
     }
 
     var activateOverride = function (overrideId) {
         if (!isOverrideActive(overrideId)) {
-            _overrides[overrideId].timer = setTimeout(deactivateOverride, _overrides[overrideId].timeout * 1000, overrideId);
-            event.emit("overrideActivated", _overrides[overrideId].overrides);
+            overrides[overrideId].timer = setTimeout(deactivateOverride, overrides[overrideId].timeout * 1000, overrideId);
+            event.emit("overrideActivated", override.overrides);
         }
     }
 
     var deactivateOverride = function (overrideId) {
         if (isOverrideActive(overrideId)) {
-            clearTimeout(_overrides[overrideId].timer)
-            _overrides[overrideId].timer = null;
-            event.emit("overrideDeactivated", _overrides[overrideId].overrides);
+            const override = overrides[overrideId];
+            clearTimeout(override.timer)
+            override.timer = null;
+            event.emit("overrideDeactivated", override.overrides);
         }
     }
 
     var isOverrideActive = function (overrideId) {
-        if (Util.isEmpty(_overrides)) {
+        if (Util.isEmpty(overrides)) {
             return false;
         }
-        return _overrides[overrideId].timer != null;
+        return timeouts[overrideId] != null;
     }
 
     var isChannelOverriden = function (channelId) {
         let isOverridden = false;
 
-        for (id in _overrides) {
-            if (_overrides.hasOwnProperty(id) && isOverrideActive(id)) {
-                _overrides[id].overrides.forEach((ovr) => {
-                    if (ovr.channelId == channelId) {
-                        isOverridden = true;
-                    }
-                });
+        for (let id in overrides) {
+            if (overrides.hasOwnProperty(id) && isOverrideActive(id)) {
+                if (overrides[id].channels[channelId]) {
+                    isOverridden = true;
+                }
             }
         }
 
@@ -96,37 +97,35 @@ module.exports = function (config, redisClient) {
     }
 
     var loadFromJSON = function (inJson) {
-        let overrides = {};
-        inJson.forEach((overrideSettings) => {
-            let overrideObj = {};
-            overrideObj.timeout = parseInt(overrideSettings.timeout)
-            overrideObj.timer = null;
-            overrideObj.overrides = [];
-            overrideSettings.overrides.forEach((inOverrideItem) => {
-                overrideObj.overrides.push(inOverrideItem)
-            })
+        let _overrides = inJson;
+        for (let id in _overrides) {
+            if (_overrides.hasOwnProperty(id)) {
+                _overrides[id].timeout = parseInt(_overrides[id].timeout);
+            }
+        }
 
-            overrides[overrideSettings.id] = overrideObj;
-        })
-
-        return overrides;
+        return _overrides;
     }
 
-    var saveToRedis = function (overrides) {
+    var saveToRedis = function () {
         return new Promise((resolve, reject) => {
             clearRedis()
                 .then(() => {
                     let pipe = redisClient.getPipeline();
                     let overrideId = 0;
-                    for (id in overrides) {
+                    for (let id in overrides) {
                         if (overrides.hasOwnProperty(id)) {
                             overrideObj = overrides[id]
                             pipe.hmset(propertiesPrefix + id, { timeout: overrideObj.timeout });
-                            overrideObj.overrides.forEach((overrideItem) => {
-                                pipe.hmset(overridePrefix + overrideId, overrideItem);
-                                pipe.sadd(channelPrefix + id, overrideId);
-                                overrideId++;
-                            })
+
+                            for (let channelId in overrideObj.channels) {
+                                if (overrideObj.channels.hasOwnProperty(channelId)) {
+                                    let channelItem = {}; channelItem[channelId] = overrideObj.channels[channelId];
+                                    pipe.hmset(overridePrefix + overrideId, channelItem);
+                                    pipe.sadd(channelPrefix + id, overrideId);
+                                    overrideId++;
+                                }
+                            }
                         }
                     }
 
@@ -227,7 +226,7 @@ module.exports = function (config, redisClient) {
         deactivateOverride: deactivateOverride,
         isChannelOverriden: isChannelOverriden,
         getChannelOverrideState: getChannelOverrideState,
-        getOverrides:getOverrides
+        getOverrides: getOverrides
     }
 }
 
