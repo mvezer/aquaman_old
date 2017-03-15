@@ -1,8 +1,9 @@
 const expect = require("chai").expect;
 const sinon = require("sinon");
 const ScheduleManager = require("../server/controller/ScheduleManager");
+const TimeUtil = require("../server/util/TimeUtil");
 
-let TimeUtil;
+let timeUtilMock;
 let config, redisClient, channelModel, overrideManager;
 
 const timings_A =
@@ -14,22 +15,26 @@ const timings_A =
 describe("ScheduleManager", () => {
     beforeEach(() => {
         config = sinon.stub();
-        /*
-        const timingPrefix = config.getEnv("redisTimingPrefix") + config.getEnv("redisKeySeparator");
-    const channelPrefix = config.getEnv("redisChannelSchedulePrefix") + config.getEnv("redisKeySeparator");*/
-        config.getEnv = sinon.stub();
 
+        config.getEnv = sinon.stub();
         config.getEnv.withArgs("redisTimingPrefix").returns("timing");
         config.getEnv.withArgs("redisKeySeparator").returns(":");
         config.getEnv.withArgs("redisChannelSchedulePrefix").returns("channel_schedule");
 
-        TimeUtil = sinon.stub();
-        TimeUtil.getCurrentRTS = sinon.stub.returns(12 * 3600); // 12pm
-
         scheduleManager = new ScheduleManager(config, redisClient, channelModel, overrideManager);
+        timeUtilMock = sinon.mock(TimeUtil);
+        
     });
     it("getNextTiming() should return the next upcoming timing object", (done) => {
+        timeUtilMock.expects("getCurrentRTS").returns(12*3600);
         expect(scheduleManager._getNextTiming(timings_A)).to.deep.equal({ rts: 13 * 3600, state: true });
+
+        timeUtilMock.expects("getCurrentRTS").returns(0);
+        expect(scheduleManager._getNextTiming(timings_A)).to.deep.equal({ rts: 10 * 3600, state: true });
+
+        timeUtilMock.expects("getCurrentRTS").returns(18*3600);
+        expect(scheduleManager._getNextTiming(timings_A)).to.deep.equal({ rts: 10 * 3600, state: true });
+        
         done();
     });
 });
