@@ -45,6 +45,10 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
         return saveToRedis();
     }
 
+    var get = function() {
+        return schedule;
+    }
+
     var loadFromRedis = function () {
         return new Promise((resolve, reject) => {
             let _schedule = {};
@@ -254,6 +258,7 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
     return {
         init: init,
         update: update,
+        get:get,
 
         _getNextTiming: getNextTiming,
         _getCurrentScheduleState: getCurrentScheduleState,
