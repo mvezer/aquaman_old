@@ -22,19 +22,21 @@ describe("ScheduleManager", () => {
         config.getEnv.withArgs("redisChannelSchedulePrefix").returns("channel_schedule");
 
         scheduleManager = new ScheduleManager(config, redisClient, channelModel, overrideManager);
-        
-        
+
+
     });
     it("getNextTiming() should return the next upcoming timing object", (done) => {
         timeUtilMock = sinon.mock(TimeUtil);
-        timeUtilMock.expects("getCurrentRTS").returns(12*3600);
-        expect(scheduleManager._getNextTiming(timings_A)).to.deep.equal({ rts: 13 * 3600, state: true });
+        const schedule = { test: timings_A };
+
+        timeUtilMock.expects("getCurrentRTS").returns(12 * 3600);
+        expect(scheduleManager._getNextTiming(schedule, "test")).to.deep.equal({ rts: 13 * 3600, state: true });
 
         timeUtilMock.expects("getCurrentRTS").returns(0);
-        expect(scheduleManager._getNextTiming(timings_A)).to.deep.equal({ rts: 10 * 3600, state: true });
+        expect(scheduleManager._getNextTiming(schedule, "test")).to.deep.equal({ rts: 10 * 3600, state: true });
 
-        timeUtilMock.expects("getCurrentRTS").returns(18*3600);
-        expect(scheduleManager._getNextTiming(timings_A)).to.deep.equal({ rts: 10 * 3600, state: true });
+        timeUtilMock.expects("getCurrentRTS").returns(18 * 3600);
+        expect(scheduleManager._getNextTiming(schedule, "test")).to.deep.equal({ rts: 10 * 3600, state: true });
 
         timeUtilMock.restore();
         done();
@@ -42,17 +44,19 @@ describe("ScheduleManager", () => {
 
     it("getCurrentState() should return the current state by schedule", (done) => {
         timeUtilMock = sinon.mock(TimeUtil);
-        timeUtilMock.expects("getCurrentRTS").returns(13*3600);
-        expect(scheduleManager._getCurrentState(timings_A)).to.be.true;
+        const schedule = { test: timings_A };
+
+        timeUtilMock.expects("getCurrentRTS").returns(13 * 3600);
+        expect(scheduleManager._getCurrentScheduleState(schedule, "test")).to.be.true;
 
         timeUtilMock.expects("getCurrentRTS").returns(0);
-        expect(scheduleManager._getCurrentState(timings_A)).to.be.false;
+        expect(scheduleManager._getCurrentScheduleState(schedule, "test")).to.be.false;
 
-        timeUtilMock.expects("getCurrentRTS").returns(18*3600);
-        expect(scheduleManager._getCurrentState(timings_A)).to.be.false;
+        timeUtilMock.expects("getCurrentRTS").returns(18 * 3600);
+        expect(scheduleManager._getCurrentScheduleState(schedule, "test")).to.be.false;
 
         timeUtilMock.restore();
-        
+
         done();
     });
 });
