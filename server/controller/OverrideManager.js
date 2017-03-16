@@ -12,24 +12,21 @@ module.exports = function (config, redisClient) {
     const channelPrefix = config.getEnv("redisChannelOverridePrefix") + config.getEnv("redisKeySeparator");
     const overridePrefix = config.getEnv("redisOverridePrefix") + config.getEnv("redisKeySeparator");
 
-    overrides = {};
-    timeouts = {};
+    _overrides = {};
+    _timeouts = {};
 
-    var getOverrides = function () {
+    var get = function () {
         return _overrides;
     }
-
 
     var init = function () {
         return new Promise((resolve, reject) => {
             loadFromRedis()
-                .then((_overrides) => {
-                    if (!Util.isEmpty(_overrides)) {
-                        overrides = _overrides;
+                .then((loadedOverrides) => {
+                    if (!Util.isEmpty(loadedOverrides)) {
+                        _overrides = loadedOverrides;
                     } else {
-                        console.log("Loading override defaults")
-                        overrides = loadFromJSON(config.getEnv("overrideDefaults"));
-                        console.log(overrides);
+                        _overrides = loadFromJSON(config.getEnv("overrideDefaults"));
                         return saveToRedis();
                     }
                 })
@@ -39,39 +36,37 @@ module.exports = function (config, redisClient) {
     }
 
     var update = function (inJson) {
-        overrides = loadFromJSON(inJson);
-        return saveToRedis();
+        _overrides = loadFromJSON(inJson);
+        return saveToRedis(_overrides);
     }
 
     var activateOverride = function (overrideId) {
         if (!isOverrideActive(overrideId)) {
-            overrides[overrideId].timer = setTimeout(deactivateOverride, overrides[overrideId].timeout * 1000, overrideId);
-            event.emit("overrideActivated", override.overrides);
+            _timeouts[overrideId] = setTimeout(deactivateOverride, _overrides[overrideId].timeout * 1000, overrideId);
+            event.emit("overrideActivated", overrideId);
         }
     }
 
     var deactivateOverride = function (overrideId) {
         if (isOverrideActive(overrideId)) {
-            const override = overrides[overrideId];
-            clearTimeout(override.timer)
-            override.timer = null;
-            event.emit("overrideDeactivated", override.overrides);
+            clearTimeout(timeouts[overrideId]);
+            _timeouts[overrideId] = null;
+            event.emit("overrideDeactivated", overrideId);
         }
     }
 
     var isOverrideActive = function (overrideId) {
-        if (Util.isEmpty(overrides)) {
+        if (Util.isEmpty(_timeouts)) {
             return false;
         }
-        return timeouts[overrideId] != null;
+        return _timeouts[overrideId] != null;
     }
 
     var isChannelOverriden = function (channelId) {
         let isOverridden = false;
-
-        for (let id in overrides) {
-            if (overrides.hasOwnProperty(id) && isOverrideActive(id)) {
-                if (overrides[id].channels[channelId]) {
+        for (let id in _overrides) {
+            if (_overrides.hasOwnProperty(id) && isOverrideActive(id)) {
+                if (_overrides[id].channels[channelId]) {
                     isOverridden = true;
                 }
             }
@@ -82,14 +77,16 @@ module.exports = function (config, redisClient) {
 
     var getChannelOverrideState = function (channelId) {
         let state = false;
-
-        for (id in _overrides) {
-            if (_overrides.hasOwnProperty(id) && isOverrideActive(id)) {
-                _overrides[id].overrides.forEach((ovr) => {
-                    if (ovr.channelId == channelId) {
-                        state = ovr.state;
+        for (let overrideId in _overrides) {
+            if (_overrides.hasOwnProperty(overrideId) && isOverrideActive(overrideId)) {
+                const channels = _overrides[overrideId].channels;
+                for (let id in channels) {
+                    if (channels.hasOwnProperty(id)) {
+                        if (id == channelId && channels[id]) {
+                            state = true;
+                        }
                     }
-                });
+                }
             }
         }
 
@@ -97,17 +94,17 @@ module.exports = function (config, redisClient) {
     }
 
     var loadFromJSON = function (inJson) {
-        let _overrides = inJson;
-        for (let id in _overrides) {
-            if (_overrides.hasOwnProperty(id)) {
-                _overrides[id].timeout = parseInt(_overrides[id].timeout);
+        let overrides = inJson;
+        for (let id in overrides) {
+            if (overrides.hasOwnProperty(id)) {
+                overrides[id].timeout = parseInt(overrides[id].timeout);
             }
         }
 
-        return _overrides;
+        return overrides;
     }
 
-    var saveToRedis = function () {
+    var saveToRedis = function (overrides) {
         return new Promise((resolve, reject) => {
             clearRedis()
                 .then(() => {
@@ -200,13 +197,13 @@ module.exports = function (config, redisClient) {
                 .then((overrideItems) => {
                     overrideIds.forEach((id) => {
                         overrides[id] = {};
-                        overrides[id].overrides = [];
+                        overrides[id].channels = {};
                         overrides[id].timeout = parseInt(propertyMap[id].timeout);
-                        overrides[id].timer = null;
                         itemIdMap[id].forEach((itemId) => {
                             let o = overrideItems.shift()[1];
-                            o.state = o.state == "true";
-                            overrides[id].overrides.push(o);
+                            for (k in o) {
+                                if (o.hasOwnProperty(k)) { overrides[id].channels[k] = o[k] == "true"; }
+                            }
                         })
 
                     })
@@ -221,12 +218,12 @@ module.exports = function (config, redisClient) {
     return {
         init: init,
         update: update,
+        get: get,
         event: event,
         activateOverride: activateOverride,
         deactivateOverride: deactivateOverride,
         isChannelOverriden: isChannelOverriden,
-        getChannelOverrideState: getChannelOverrideState,
-        getOverrides: getOverrides
+        getChannelOverrideState: getChannelOverrideState
     }
 }
 

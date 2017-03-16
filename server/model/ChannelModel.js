@@ -29,7 +29,6 @@ module.exports = function (config, redisClient) {
 
     var initRPI = function (pinMap) {
         return new Promise((resolve, reject) => {
-            console.log(config.getEnv("nodeEnv"));
             if (config.getEnv("nodeEnv") == "production") {
                 for (channel in pinMap) {
                     if (pinMap.hasOwnProperty(channel)) {
