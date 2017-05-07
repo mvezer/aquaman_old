@@ -1,5 +1,4 @@
 {
-    "NODE_ENV": "dev",
     "HTTP_HOST": "localhost",
     "HTTP_PORT": 3000,
     "REDIS_HOST": "localhost",
@@ -7,9 +6,7 @@
     "REDIS_PASSWORD": "guest",
     "REDIS_FAMILY": 0,
     "REDIS_KEY_SEPARATOR": ":",
-
     "REDIS_SETTINGS_KEY_PREFIX": "settings",
-
     "REDIS_CHANNEL_STATE_KEY_PREFIX": "channel_state",
     "REDIS_TIMING_PREFIX": "timing",
     "REDIS_CHANNEL_SCHEDULE_PREFIX": "channel_schedule",
@@ -19,68 +16,70 @@
         "light"
     ],
     "SCHEDULE_DEFAULTS": {
-        "channels": [
+        "light": [
             {
-                "channelId": "light",
-                "timings": [
-                    {
-                        "rts": "00:00",
-                        "state": true
-                    }
-                ]
-            },
+                "rts": "01:00",
+                "state": true
+            }
+        ],
+        "co2": [
             {
-                "channelId": "co2",
-                "timings": [
-                    {
-                        "rts": "00:00",
-                        "state": true
-                    }
-                ]
-            },
+                "rts": "01:00",
+                "state": true
+            }
+        ],
+        "filter": [
             {
-                "channelId": "filter",
-                "timings": [
-                    {
-                        "rts": "0:00",
-                        "state": true
-                    }
-                ]
+                "rts": "01:00",
+                "state": true
             }
         ]
     },
-
     "REDIS_OVERRIDE_PREFIX": "override",
     "REDIS_OVERRIDE_PROPERTIES_PREFIX": "override_properties",
     "REDIS_CHANNEL_OVERRIDE_PREFIX": "channel_override",
-    "OVERRIDE_DEFAULTS": [
-        {
-            "id": "feeding",
+    "OVERRIDE_DEFAULTS": {
+        "feeding": {
             "timeout": 30,
-            "overrides": [
-                {
-                    "channelId": "filter",
-                    "state": false
-                }
-            ]
+            "channels": {
+                "filter": false
+            }
         },
-        {
-            "id": "maintenance",
+        "maintenance": {
             "timeout": 30,
-            "overrides": [
+            "channels": {
+                "filter": false,
+                "co2": false,
+                "light": true
+            }
+        }
+    },
+    "REDIS_SERVICE_PREFIX": "service",
+    "REDIS_SERVICE_PROPERTIES_PREFIX": "service_properties",
+    "REDIS_SERVICE_CHANNELS_PREFIX": "service_channels",
+    "SERVICE_DEFAULTS": [
+        {
+            "id": "camera",
+            "period": 1800,
+            "channels": [
                 {
-                    "channelId": "filter",
-                    "state": false
+                    "id": "light",
+                    "state": true
                 },
                 {
-                    "channelId": "co2",
-                    "state": false
-                },
-                {
-                    "channelId": "light",
+                    "id": "filter",
                     "state": true
                 }
             ]
         }
-    ]
+    ],
+    "RPI_LIGHT_PIN": 4,
+    "RPI_FILTER_PIN": 3,
+    "RPI_CO2_PIN": 2,
+    "PHOTO_BASE_FILENAME": "aquaman_",
+    "PHOTO_PATH": "../images",
+    "PHOTO_WIDTH": 2592,
+    "PHOTO_HEIGHT": 1944,
+    "PHOTO_QUALITY": 80,
+    "PHOTO_ENCODING": "jpg"
 }

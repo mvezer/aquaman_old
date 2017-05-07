@@ -6,9 +6,9 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
     var channelModel = channelModel;
     var redisClient = redisClient;
     var overrideManager = overrideManager;
+
     var _schedule = {};
-    var overrides = [];
-    var channels = [];
+    var _timeouts = {};
 
     const timingPrefix = config.getEnv("redisTimingPrefix") + config.getEnv("redisKeySeparator");
     const channelPrefix = config.getEnv("redisChannelSchedulePrefix") + config.getEnv("redisKeySeparator");
@@ -19,18 +19,16 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
 
         return new Promise((resolve, reject) => {
             loadFromRedis()
-                .then((schedule) => {
-                    if (!Util.isEmpty(schedule)) {
-                        _schedule = schedule;
+                .then((loadedSchedule) => {
+                    if (!Util.isEmpty(loadedSchedule)) {
+                        _schedule = loadedSchedule;
                         resolve();
                     } else {
-                        console.log("Loading schedule defaults")
                         _schedule = loadFromJSON(config.getEnv("scheduleDefaults"));
                         return saveToRedis(_schedule);
                     }
                 })
                 .then(() => {
-                    initTimers(_schedule);
                     initChannels(_schedule);
                     resolve();
                 })
@@ -40,9 +38,12 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
 
     var update = function (inJSON) {
         _schedule = loadFromJSON(inJSON);
-        initTimers(_schedule);
         initChannels(_schedule);
         return saveToRedis(_schedule);
+    }
+
+    var get = function () {
+        return _schedule;
     }
 
     var loadFromRedis = function () {
@@ -64,7 +65,6 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
                     timingIds = timing_ids;
                     let pipe = redisClient.getPipeline();
                     timing_ids.forEach((inner_ids) => {
-                        let channel = {};
                         inner_ids[1].forEach((timingId) => {
                             pipe.hgetall(timingPrefix + timingId);
                         });
@@ -74,18 +74,18 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
                 })
                 .then((timings) => {
                     channelIds.forEach((channel_id, channel_index) => {
-                        let channel = {};
-                        channel.timings = [];
+
+                        channelTimings = [];
                         timingIds[channel_index][1].forEach(() => {
                             let t = timings.shift()[1];
-                            t.rts = Number(t.rts);
+                            t.rts = parseInt(t.rts);
                             t.state = (t.state == "true")
-                            channel.timings.push(t);
+                            channelTimings.push(t);
                         })
 
-                        channel.timings.sort((t0, t1) => { return t0.rts - t1.rts });
+                        channelTimings.sort((t0, t1) => { return t0.rts - t1.rts });
 
-                        schedule[channel_id.split(config.getEnv("redisKeySeparator"))[1]] = channel;
+                        schedule[channel_id.split(config.getEnv("redisKeySeparator"))[1]] = channelTimings;
                     });
 
                     resolve(schedule);
@@ -96,23 +96,15 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
     }
 
     var loadFromJSON = function (inJson) {
-        let schedule = {};
-        Util.obj2array(inJson.channels).forEach((inChannel) => {
-            let channel = {};
-            channel.timings = [];
-            channel.timeout = {};
-            Util.obj2array(inChannel.timings).forEach((inTiming) => {
-                channel.timings.push({
-                    rts: TimeUtil.timeString2rts(inTiming.rts),
-                    state: inTiming.state,
-                });
-            })
+        let schedule = inJson;
 
-            channel.timings.sort((t0, t1) => { return t0.rts - t1.rts });
-
-            schedule[inChannel.channelId] = channel;
-        })
-
+        for (let channelId in schedule) {
+            if (schedule.hasOwnProperty(channelId)) {
+                schedule[channelId].forEach((timing) => {
+                    timing.rts = TimeUtil.timeString2rts(timing.rts);
+                })
+            }
+        }
         return schedule;
     }
 
@@ -122,11 +114,11 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
             let timingId = 0;
             clearRedis()
                 .then(() => {
-                    for (channel in schedule) {
-                        if (schedule.hasOwnProperty(channel)) {
-                            schedule[channel].timings.forEach((timing) => {
+                    for (channelId in schedule) {
+                        if (schedule.hasOwnProperty(channelId)) {
+                            schedule[channelId].forEach((timing) => {
                                 pipe.hmset(timingPrefix + timingId, timing);
-                                pipe.sadd(channelPrefix + channel, timingId);
+                                pipe.sadd(channelPrefix + channelId, timingId);
                                 timingId++;
                             });
                         }
@@ -158,50 +150,48 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
 
     }
 
-    var initTimers = function (schedule) {
-        for (channel in schedule) {
-            if (schedule.hasOwnProperty(channel)) {
-                timeoutHandler(schedule, channel);
-            }
-        }
-    }
-
-    var onOverrideChanged = function (overrides) {
-        initChannels(_schedule)
+    var onOverrideChanged = function () {
+        initChannels()
     }
 
     var initChannels = function (schedule) {
-        for (channel in schedule) {
-            if (schedule.hasOwnProperty(channel)) {
-                const channelState = overrideManager.isChannelOverriden(channel)
-                    ? overrideManager.getChannelOverrideState(channel) : getCurrentState(schedule[channel].timings)
-                channelModel.set(channel, channelState);
+        for (channelId in schedule) {
+            if (schedule.hasOwnProperty(channelId)) {
+                handleTimeout(schedule, channelId);
             }
         }
     }
 
-    var timeoutHandler = function (schedule, channel, timing) {
-        if (schedule[channel].timeout) {
-            clearTimeout(schedule[channel].timeout);
-        }
-
-        let nextTiming = getNextTiming(schedule[channel].timings)
-        schedule[channel].timeout = setTimeout(timeoutHandler, getNextTimeout(nextTiming.rts) * 1000, schedule, channel, nextTiming);
-
-        if (timing) {
-            channelModel.set(channel, timing.state);
-        }
+    var handleTimeout = function (schedule, channelId) {
+        setChannelTimeOut(channelId, getNextTimeout(schedule, channelId));
+        updateChannelState(schedule, channelId);
     }
 
-    var getNextTiming = function (timings) {
+    var setChannelTimeOut = function (channelId, timeout) {
+        if (_timeouts[channelId]) {
+            clearTimeout(_timeouts[channelId]);
+        }
+        _timeouts[channelId] = setTimeout(handleTimeout, timeout * 1000, channelId);
+    }
+
+    var updateChannelState = function (schedule, channelId) {
+        const state = overrideManager.isChannelOverriden(channelId)
+            ? overrideManager.getChannelOverrideState(channelId) : getCurrentScheduleState(schedule, channelId);
+        channelModel.set(channelId, state);
+    }
+
+    var getNextTiming = function (schedule, channelId) {
         const currentRTS = TimeUtil.getCurrentRTS();
+        const timings = schedule[channelId];
+
         let lo = -1;
         let hi = -1;
         let i = 0;
+
         while (i < timings.length && (lo == -1 || hi == -1)) {
-            if (timings[i].rts < currentRTS) {
+            if (timings[i].rts < currentRTS && lo == -1) {
                 lo = i;
-            } else if (timings[i].rts > currentRTS + 1) {
+            } else if (timings[i].rts > currentRTS + 1 && hi == -1) {
                 hi = i;
             }
             i++;
@@ -218,8 +208,9 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
         return timings[0];
     }
 
-    var getNextTimeout = function (nextRts) {
+    var getNextTimeout = function (schedule, channelId) {
         const currentRTS = TimeUtil.getCurrentRTS();
+        const nextRts = getNextTiming(schedule, channelId).rts;
 
         if (nextRts >= currentRTS) {
             return (nextRts - currentRTS);
@@ -228,13 +219,15 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
         }
     }
 
-    var getCurrentState = function (timings) {
+    var getCurrentScheduleState = function (schedule, channelId) {
         const currentRTS = TimeUtil.getCurrentRTS();
+        const timings = schedule[channelId];
+
         let lo = -1;
         let hi = -1;
         let i = 0;
         while (i < timings.length && (lo == -1 || hi == -1)) {
-            if (timings[i].rts < currentRTS) {
+            if (timings[i].rts <= currentRTS) {
                 lo = i;
             } else {
                 hi = i;
@@ -254,6 +247,10 @@ module.exports = function (config, redisClient, channelModel, overrideManager) {
     }
     return {
         init: init,
-        update: update
+        update: update,
+        get: get,
+
+        _getNextTiming: getNextTiming,
+        _getCurrentScheduleState: getCurrentScheduleState,
     }
 }

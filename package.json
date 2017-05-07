@@ -13,10 +13,13 @@
     "url": "https://github.com/mvezer/aquaman.git"
   },
   "dependencies": {
+    "flickrapi": "^0.6.0",
     "hapi": "^16.1.0",
     "ioredis": "^2.5.0",
     "joi": "^10.2.2",
-    "nconf": "^0.8.4"
+    "mc-gpio": "^1.0.4",
+    "nconf": "^0.8.4",
+    "raspicam": "^0.2.13"
   },
   "devDependencies": {
     "chai": "^3.5.0",
