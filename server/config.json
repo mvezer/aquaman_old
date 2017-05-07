@@ -18,19 +18,19 @@
     "SCHEDULE_DEFAULTS": {
         "light": [
             {
-                "rts": "00:00",
+                "rts": "01:00",
                 "state": true
             }
         ],
         "co2": [
             {
-                "rts": "00:00",
+                "rts": "01:00",
                 "state": true
             }
         ],
         "filter": [
             {
-                "rts": "00:00",
+                "rts": "01:00",
                 "state": true
             }
         ]
