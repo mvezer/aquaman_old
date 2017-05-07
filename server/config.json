@@ -40,13 +40,13 @@
     "REDIS_CHANNEL_OVERRIDE_PREFIX": "channel_override",
     "OVERRIDE_DEFAULTS": {
         "feeding": {
-            "timeout": 30,
+            "timeout": 600,
             "channels": {
                 "filter": false
             }
         },
         "maintenance": {
-            "timeout": 30,
+            "timeout": 7200,
             "channels": {
                 "filter": false,
                 "co2": false,
